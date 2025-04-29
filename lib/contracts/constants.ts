@@ -1,18 +1,19 @@
 import { Address } from "viem";
+import MockUSDC_ABI_Imported from "./MockUSDC.json";
 
-// Contract addresses for different networks
+// Address of Trading Contract
 export const CONTRACT_ADDRESSES: Record<number, Address> = {
-  // Base Sepolia deployment
-  84532: "0x2904921988f84BBD764D585e6f0249869FDEb25C",
+  // Pharos deployment
+  50002: "0x2904921988f84BBD764D585e6f0249869FDEb25C", // Alamat kontrak trading
 };
 
-// USDC token addresses
+// Token Address PHA or USDC
 export const USDC_ADDRESSES: Record<number, Address> = {
-  84532: "0x2904921988f84BBD764D585e6f0249869FDEb25C",
+  50002: "0xALAMAT_TOKEN_PHA_ATAU_USDC_YANG_BENAR", // This must be different from the address above
 };
 
 // Use the actual contract ABI
-export const PREDICTION_MARKET_ABI = [
+export const MockUSDC_ABI = [
   {
     inputs: [
       { internalType: "string", name: "countryId", type: "string" },
@@ -37,16 +38,16 @@ export const PREDICTION_MARKET_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      { internalType: "uint256", name: "takeProfit", type: "uint256" },
-      { internalType: "uint256", name: "stopLoss", type: "uint256" },
-    ],
-    name: "setTPSL",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
+    //   inputs: [
+    //     { internalType: "uint256", name: "takeProfit", type: "uint256" },
+    //     { internalType: "uint256", name: "stopLoss", type: "uint256" },
+    //   ],
+    //   name: "setTPSL",
+    //   outputs: [],
+    //   stateMutability: "nonpayable",
+    //   type: "function",
+    // },
+    // {
     inputs: [],
     name: "getPosition",
     outputs: [
@@ -92,3 +93,6 @@ export const PREDICTION_MARKET_ABI = [
     ],
   },
 ] as const;
+
+// Export imported JSON if needed
+export const USDC_ABI = MockUSDC_ABI_Imported;

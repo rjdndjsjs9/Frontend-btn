@@ -4,6 +4,21 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import {
+  useContractRead,
+  useContractWrite,
+  useWaitForTransactionReceipt,
+  useWalletClient,
+  useAccount,
+  useBalance,
+} from "wagmi";
+import { parseEther } from "viem";
+import {
+  CONTRACT_ADDRESSES,
+  MockUSDC_ABI,
+  USDC_ADDRESSES,
+  USDC_ABI,
+} from "@/lib/contracts/constants";
 
 // Sample country data - in a real app, this would come from an API
 const countryData = {
@@ -249,45 +264,54 @@ const countryData = {
   },
 };
 
-
 function CountryPositionsList() {
-  // Data dummy untuk FE-only
-  const dummyPositions = [
-    {
-      id: 1,
-      type: "Long",
-      size: "$1,000",
-      entryPrice: "$1,200",
-      leverage: "5x",
-      pnl: "+$50 (5%)",
-      status: "Open",
-    },
-  ];
+  const {
+    data: position,
+    isError,
+    isLoading,
+    refetch,
+  } = useContractRead({
+    address: CONTRACT_ADDRESSES[50002],
+    abi: MockUSDC_ABI,
+    functionName: "getPosition",
+  });
+
+  if (isLoading) {
+    return <div className="text-center text-gray-500 py-4">Loading...</div>;
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center text-gray-500 py-4">Error loading data</div>
+    );
+  }
 
   return (
     <div className="w-full bg-[#1d1f22] rounded-[40px] p-6">
-      <h3 className="text-white text-xl font-medium mb-4"></h3>
-      {dummyPositions.length > 0 ? (
+      <h3 className="text-white text-xl font-medium mb-4">Posisi Trading</h3>
+      {position && position.isOpen ? (
         <div className="space-y-4">
-          {dummyPositions.map((position) => (
-            <div
-              key={position.id}
-              className="bg-[#262a33] p-4 rounded-xl flex justify-between items-center"
-            >
-              <div className="flex flex-col">
-                <span className="text-white">{position.type}</span>
-                <span className="text-gray-400">Size: {position.size}</span>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-green-500">{position.pnl}</span>
-                <span className="text-gray-400">{position.leverage}</span>
-              </div>
+          <div className="bg-[#262a33] p-4 rounded-xl flex justify-between items-center">
+            <div className="flex flex-col">
+              <span className="text-white">
+                {position.direction === 0 ? "Long" : "Short"}
+              </span>
+              <span className="text-gray-400">
+                Size: {position.size.toString()} USDC
+              </span>
             </div>
-          ))}
+            <div className="flex flex-col items-end">
+              <span className="text-gray-400">
+                Leverage: {position.leverage}x
+              </span>
+              <span className="text-gray-400">
+                Entry Price: {position.entryPrice.toString()}
+              </span>
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="text-center text-gray-500 py-4">
-        </div>
+        <div className="text-center text-gray-500 py-4">No open positions</div>
       )}
     </div>
   );
@@ -304,10 +328,91 @@ export default function CountryPage() {
     isLong: true,
   });
 
+  const { writeContract, data: hash, isPending } = useContractWrite();
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
+
+  const { address } = useAccount();
+  const { data: walletBalance, refetch: refetchBalance } = useBalance({
+    address,
+  });
+
+  useEffect(() => {
+    if (hash && !isConfirming) {
+      setPosition({
+        size: "",
+        leverage: "1",
+        isLong: true,
+      });
+
+      document
+        .querySelector("#positions-panel")
+        ?.scrollIntoView({ behavior: "smooth" });
+
+      const timer = setTimeout(() => {
+        refetchBalance();
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [hash, isConfirming, refetchBalance]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (address) {
+        refetchBalance();
+      }
+    }, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [address, refetchBalance]);
+
   const handlePlaceTrade = async () => {
-    // FE-only: tampilkan alert
-    alert("This is a FE-only!");
+    try {
+      if (!id || typeof id !== "string") {
+        throw new Error("Country ID is required");
+      }
+
+      const sizeInWei = parseEther(position.size);
+      console.log("Melakukan approval untuk", sizeInWei, "tokens");
+
+      // 1. Approve contract to use token
+      const approvalTx = await writeContract({
+        address: USDC_ADDRESSES[50002],
+        abi: USDC_ABI,
+        functionName: "approve",
+        args: [CONTRACT_ADDRESSES[50002], sizeInWei],
+      });
+      console.log("Approval TX:", approvalTx);
+
+      // 2. Open Position
+      const tradeTx = await writeContract({
+        address: CONTRACT_ADDRESSES[50002],
+        abi: MockUSDC_ABI,
+        functionName: "openPosition",
+        args: [
+          id,
+          position.isLong ? 0 : 1,
+          Number(position.leverage),
+          sizeInWei,
+        ],
+        value: sizeInWei,
+      });
+      console.log("Trade TX:", tradeTx);
+
+      setTimeout(() => {
+        refetchBalance();
+      }, 1000);
+    } catch (error) {
+      console.error("Error placing trade:", error);
+      if (error instanceof Error) {
+        alert("failed to trade: " + error.message);
+      } else {
+        alert("failed to trade: " + JSON.stringify(error));
+      }
+    }
   };
+
+  const isProcessing = isPending || isConfirming;
 
   if (!country) {
     return <div>Country not found</div>;
@@ -647,17 +752,20 @@ export default function CountryPage() {
             <div className="self-stretch px-2.5 py-2 bg-[#2d2d2e] rounded-[100px] flex">
               <div className="self-stretch h-[61px] flex-1 flex items-center relative">
                 <div
-                  className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${position.isLong ? "justify-start" : "justify-end"
-                    }`}
+                  className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${
+                    position.isLong ? "justify-start" : "justify-end"
+                  }`}
                 >
                   <div
-                    className={`h-full w-1/2 ${position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
-                      } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
+                    className={`h-full w-1/2 ${
+                      position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
+                    } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
                   />
                 </div>
                 <div
-                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${position.isLong ? "text-white" : "text-[#545454]"
-                    }`}
+                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
+                    position.isLong ? "text-white" : "text-[#545454]"
+                  }`}
                   onClick={() => setPosition({ ...position, isLong: true })}
                 >
                   <div className="flex items-center gap-2">
@@ -679,8 +787,9 @@ export default function CountryPage() {
                   </div>
                 </div>
                 <div
-                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${position.isLong ? "text-white" : "text-[#545454]"
-                    }`}
+                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
+                    position.isLong ? "text-white" : "text-[#545454]"
+                  }`}
                   onClick={() => setPosition({ ...position, isLong: false })}
                 >
                   <div className="flex items-center gap-2">
@@ -718,7 +827,11 @@ export default function CountryPage() {
                           Balance :{" "}
                         </span>
                         <span className="text-white text-base font-medium font-['Inter'] leading-snug">
-                          ${position.size}
+                          {walletBalance
+                            ? `${Number(walletBalance.formatted).toFixed(4)} ${
+                                walletBalance.symbol
+                              }`
+                            : "Loading..."}
                         </span>
                       </div>
                     </div>
@@ -736,8 +849,9 @@ export default function CountryPage() {
                     onChange={(e) =>
                       setPosition({ ...position, size: e.target.value })
                     }
-                    className={`flex-1 bg-transparent text-left outline-none border-none ${position.size ? "text-white" : "text-red-500"
-                      } text-xl font-bold font-['Inter'] leading-tight`}
+                    className={`flex-1 bg-transparent text-left outline-none border-none ${
+                      position.size ? "text-white" : "text-red-500"
+                    } text-xl font-bold font-['Inter'] leading-tight`}
                   />
                   <div className="text-[#d6d6d6] text-xl font-bold font-['Inter'] leading-tight">
                     PHA
@@ -748,7 +862,9 @@ export default function CountryPage() {
                     <div
                       className="absolute h-full bg-gradient-to-r from-[#155dee] to-[#45b3ff] rounded-full transition-all duration-200"
                       style={{
-                        width: `${((position.leverage - 1) / 4) * 100}%`,
+                        width: `${
+                          ((Number(position.leverage) - 1) / 4) * 100
+                        }%`,
                       }}
                     />
                     <input
@@ -769,17 +885,18 @@ export default function CountryPage() {
                         style={{ left: `${((value - 1) / 4) * 100}%` }}
                       >
                         <div
-                          className={`w-2 h-2 rounded-full transition-all duration-200 ${value <= position.leverage
+                          className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                            value <= Number(position.leverage)
                               ? "bg-white shadow-[0_0_8px_rgba(21,93,238,0.5)]"
                               : "bg-[#404040]"
-                            }`}
+                          }`}
                         />
                       </div>
                     ))}
                     <div
                       className="absolute -top-3 -ml-3 z-10 transition-all duration-200"
                       style={{
-                        left: `${((position.leverage - 1) / 4) * 100}%`,
+                        left: `${((Number(position.leverage) - 1) / 4) * 100}%`,
                       }}
                     >
                       <div className="w-6 h-6 rounded-full bg-gradient-to-b from-[#155dee] to-[#45b3ff] shadow-[0_0_10px_rgba(21,93,238,0.5)] flex items-center justify-center">
@@ -860,13 +977,16 @@ export default function CountryPage() {
                   </div>
                 </div>
                 <button
-                  className={`self-stretch h-[60px] px-4 py-2 ${position.size ? "bg-[#155dee]" : "bg-gray-600"
-                    } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
-                  disabled={!position.size}
+                  className={`self-stretch h-[60px] px-4 py-2 ${
+                    position.size && !isProcessing
+                      ? "bg-[#155dee]"
+                      : "bg-gray-600"
+                  } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
+                  disabled={!position.size || isProcessing}
                   onClick={handlePlaceTrade}
                 >
                   <div className="text-center justify-center text-white text-xl font-medium font-['Inter'] leading-normal">
-                    Place Trade
+                    {isProcessing ? "Processing..." : "Place Trade"}
                   </div>
                 </button>
               </div>
