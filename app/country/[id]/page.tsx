@@ -647,20 +647,17 @@ export default function CountryPage() {
             <div className="self-stretch px-2.5 py-2 bg-[#2d2d2e] rounded-[100px] flex">
               <div className="self-stretch h-[61px] flex-1 flex items-center relative">
                 <div
-                  className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${
-                    position.isLong ? "justify-start" : "justify-end"
-                  }`}
+                  className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${position.isLong ? "justify-start" : "justify-end"
+                    }`}
                 >
                   <div
-                    className={`h-full w-1/2 ${
-                      position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
-                    } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
+                    className={`h-full w-1/2 ${position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
+                      } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
                   />
                 </div>
                 <div
-                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
-                    position.isLong ? "text-white" : "text-[#545454]"
-                  }`}
+                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${position.isLong ? "text-white" : "text-[#545454]"
+                    }`}
                   onClick={() => setPosition({ ...position, isLong: true })}
                 >
                   <div className="flex items-center gap-2">
@@ -682,9 +679,8 @@ export default function CountryPage() {
                   </div>
                 </div>
                 <div
-                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
-                    position.isLong ? "text-white" : "text-[#545454]"
-                  }`}
+                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${position.isLong ? "text-white" : "text-[#545454]"
+                    }`}
                   onClick={() => setPosition({ ...position, isLong: false })}
                 >
                   <div className="flex items-center gap-2">
@@ -740,12 +736,11 @@ export default function CountryPage() {
                     onChange={(e) =>
                       setPosition({ ...position, size: e.target.value })
                     }
-                    className={`flex-1 bg-transparent text-left outline-none border-none ${
-                      position.size ? "text-white" : "text-red-500"
-                    } text-xl font-bold font-['Inter'] leading-tight`}
+                    className={`flex-1 bg-transparent text-left outline-none border-none ${position.size ? "text-white" : "text-red-500"
+                      } text-xl font-bold font-['Inter'] leading-tight`}
                   />
                   <div className="text-[#d6d6d6] text-xl font-bold font-['Inter'] leading-tight">
-                    nUSDC
+                    PHA
                   </div>
                 </div>
                 <div className="self-stretch py-6 relative inline-flex justify-start items-center gap-3">
@@ -774,11 +769,10 @@ export default function CountryPage() {
                         style={{ left: `${((value - 1) / 4) * 100}%` }}
                       >
                         <div
-                          className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                            value <= position.leverage
+                          className={`w-2 h-2 rounded-full transition-all duration-200 ${value <= position.leverage
                               ? "bg-white shadow-[0_0_8px_rgba(21,93,238,0.5)]"
                               : "bg-[#404040]"
-                          }`}
+                            }`}
                         />
                       </div>
                     ))}
@@ -866,9 +860,8 @@ export default function CountryPage() {
                   </div>
                 </div>
                 <button
-                  className={`self-stretch h-[60px] px-4 py-2 ${
-                    position.size ? "bg-[#155dee]" : "bg-gray-600"
-                  } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
+                  className={`self-stretch h-[60px] px-4 py-2 ${position.size ? "bg-[#155dee]" : "bg-gray-600"
+                    } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
                   disabled={!position.size}
                   onClick={handlePlaceTrade}
                 >
