@@ -19,6 +19,7 @@ import {
   USDC_ADDRESSES,
   USDC_ABI,
 } from "@/lib/contracts/constants";
+import { usePositionsStore } from "@/components/trading/PositionsContext";
 
 // Sample country data - in a real app, this would come from an API
 const countryData = {
@@ -265,6 +266,9 @@ const countryData = {
 };
 
 function CountryPositionsList() {
+  const { address } = useAccount();
+  const { setRefreshPositionsFn } = usePositionsStore();
+
   const {
     data: position,
     isError,
@@ -274,7 +278,18 @@ function CountryPositionsList() {
     address: CONTRACT_ADDRESSES[50002],
     abi: MockUSDC_ABI,
     functionName: "getPosition",
+    args: address ? [address] : ([] as const),
   });
+
+  useEffect(() => {
+    if (address) {
+      refetch();
+    }
+  }, [address, refetch]);
+
+  useEffect(() => {
+    setRefreshPositionsFn(() => refetch);
+  }, [refetch, setRefreshPositionsFn]);
 
   if (isLoading) {
     return <div className="text-center text-gray-500 py-4">Loading...</div>;
@@ -283,6 +298,14 @@ function CountryPositionsList() {
   if (isError) {
     return (
       <div className="text-center text-gray-500 py-4">Error loading data</div>
+    );
+  }
+
+  if (!address) {
+    return (
+      <div className="text-center text-gray-500 py-4">
+        Connect wallet to view positions
+      </div>
     );
   }
 
@@ -336,6 +359,16 @@ export default function CountryPage() {
     address,
   });
 
+  const { triggerRefresh } = usePositionsStore();
+
+  const { refetch: refetchPosition } = useContractRead({
+    address: CONTRACT_ADDRESSES[50002],
+    abi: MockUSDC_ABI,
+    functionName: "getPosition",
+    args: address ? [address] : ([] as const),
+    enabled: false,
+  });
+
   useEffect(() => {
     if (hash && !isConfirming) {
       setPosition({
@@ -349,12 +382,15 @@ export default function CountryPage() {
         ?.scrollIntoView({ behavior: "smooth" });
 
       const timer = setTimeout(() => {
-        refetchBalance();
-      }, 2000);
+        refetchBalance().catch((err) =>
+          console.error("Failed to refresh balance:", err)
+        );
+        triggerRefresh();
+      }, 3500);
 
       return () => clearTimeout(timer);
     }
-  }, [hash, isConfirming, refetchBalance]);
+  }, [hash, isConfirming, refetchBalance, triggerRefresh]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -372,8 +408,14 @@ export default function CountryPage() {
         throw new Error("Country ID is required");
       }
 
-      const sizeInWei = parseEther(position.size);
-      console.log("Melakukan approval untuk", sizeInWei, "tokens");
+      if (!address) {
+        throw new Error("Wallet not connected");
+      }
+
+      const sizeInWei = parseEther(
+        (Number(position.size) * Number(position.leverage)).toString()
+      );
+      console.log("Approving", sizeInWei, "tokens");
 
       // 1. Approve contract to use token
       const approvalTx = await writeContract({
@@ -383,6 +425,9 @@ export default function CountryPage() {
         args: [CONTRACT_ADDRESSES[50002], sizeInWei],
       });
       console.log("Approval TX:", approvalTx);
+
+      // Wait for approval confirmation
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // 2. Open Position
       const tradeTx = await writeContract({
@@ -399,15 +444,20 @@ export default function CountryPage() {
       });
       console.log("Trade TX:", tradeTx);
 
-      setTimeout(() => {
-        refetchBalance();
-      }, 1000);
+      // Refresh position data explicitly
+      refetchPosition().catch((err) =>
+        console.error("Failed to refresh position:", err)
+      );
+      refetchBalance().catch((err: Error) =>
+        console.error("Failed to refresh balance:", err)
+      );
+      triggerRefresh();
     } catch (error) {
       console.error("Error placing trade:", error);
       if (error instanceof Error) {
-        alert("failed to trade: " + error.message);
+        alert("Failed to trade: " + error.message);
       } else {
-        alert("failed to trade: " + JSON.stringify(error));
+        alert("Failed to trade: " + JSON.stringify(error));
       }
     }
   };
@@ -944,7 +994,8 @@ export default function CountryPage() {
                           Size - Entry Price
                         </div>
                         <div className="self-stretch justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
-                          ${position.size} at {country.markPrice}
+                          ${Number(position.size) * Number(position.leverage)}{" "}
+                          at {country.markPrice}
                         </div>
                       </div>
                     </div>

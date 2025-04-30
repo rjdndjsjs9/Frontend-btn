@@ -9,7 +9,7 @@ export const CONTRACT_ADDRESSES: Record<number, Address> = {
 
 // Token Address PHA or USDC
 export const USDC_ADDRESSES: Record<number, Address> = {
-  50002: "0xALAMAT_TOKEN_PHA_ATAU_USDC_YANG_BENAR", // This must be different from the address above
+  50002: "0x2904921988f84BBD764D585e6f0249869FDEb25C", // Replace with actual token address
 };
 
 // Use the actual contract ABI
