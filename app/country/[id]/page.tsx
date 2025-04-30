@@ -5,10 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  useContractRead,
-  useContractWrite,
+  useReadContract,
+  useWriteContract,
   useWaitForTransactionReceipt,
-  useWalletClient,
   useAccount,
   useBalance,
 } from "wagmi";
@@ -274,11 +273,11 @@ function CountryPositionsList() {
     isError,
     isLoading,
     refetch,
-  } = useContractRead({
+  } = useReadContract({
     address: CONTRACT_ADDRESSES[50002],
     abi: MockUSDC_ABI,
     functionName: "getPosition",
-    args: address ? [address] : ([] as const),
+    args: address ? ([] as const) : undefined,
   });
 
   useEffect(() => {
@@ -351,7 +350,7 @@ export default function CountryPage() {
     isLong: true,
   });
 
-  const { writeContract, data: hash, isPending } = useContractWrite();
+  const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
 
   const { address } = useAccount();
@@ -361,13 +360,14 @@ export default function CountryPage() {
 
   const { triggerRefresh } = usePositionsStore();
 
-  const { refetch: refetchPosition } = useContractRead({
-    address: CONTRACT_ADDRESSES[50002],
-    abi: MockUSDC_ABI,
-    functionName: "getPosition",
-    args: address ? [address] : ([] as const),
-    enabled: false,
-  });
+  const { refetch: refetchPosition } = address
+    ? useReadContract({
+      address: CONTRACT_ADDRESSES[50002],
+      abi: MockUSDC_ABI,
+      functionName: "getPosition",
+      args: ([] as const),
+    })
+    : { refetch: () => Promise.resolve() };
 
   useEffect(() => {
     if (hash && !isConfirming) {
@@ -802,20 +802,17 @@ export default function CountryPage() {
             <div className="self-stretch px-2.5 py-2 bg-[#2d2d2e] rounded-[100px] flex">
               <div className="self-stretch h-[61px] flex-1 flex items-center relative">
                 <div
-                  className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${
-                    position.isLong ? "justify-start" : "justify-end"
-                  }`}
+                  className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${position.isLong ? "justify-start" : "justify-end"
+                    }`}
                 >
                   <div
-                    className={`h-full w-1/2 ${
-                      position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
-                    } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
+                    className={`h-full w-1/2 ${position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
+                      } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
                   />
                 </div>
                 <div
-                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
-                    position.isLong ? "text-white" : "text-[#545454]"
-                  }`}
+                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${position.isLong ? "text-white" : "text-[#545454]"
+                    }`}
                   onClick={() => setPosition({ ...position, isLong: true })}
                 >
                   <div className="flex items-center gap-2">
@@ -837,9 +834,8 @@ export default function CountryPage() {
                   </div>
                 </div>
                 <div
-                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
-                    position.isLong ? "text-white" : "text-[#545454]"
-                  }`}
+                  className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${position.isLong ? "text-white" : "text-[#545454]"
+                    }`}
                   onClick={() => setPosition({ ...position, isLong: false })}
                 >
                   <div className="flex items-center gap-2">
@@ -878,9 +874,8 @@ export default function CountryPage() {
                         </span>
                         <span className="text-white text-base font-medium font-['Inter'] leading-snug">
                           {walletBalance
-                            ? `${Number(walletBalance.formatted).toFixed(4)} ${
-                                walletBalance.symbol
-                              }`
+                            ? `${Number(walletBalance.formatted).toFixed(4)} ${walletBalance.symbol
+                            }`
                             : "Loading..."}
                         </span>
                       </div>
@@ -899,9 +894,8 @@ export default function CountryPage() {
                     onChange={(e) =>
                       setPosition({ ...position, size: e.target.value })
                     }
-                    className={`flex-1 bg-transparent text-left outline-none border-none ${
-                      position.size ? "text-white" : "text-red-500"
-                    } text-xl font-bold font-['Inter'] leading-tight`}
+                    className={`flex-1 bg-transparent text-left outline-none border-none ${position.size ? "text-white" : "text-red-500"
+                      } text-xl font-bold font-['Inter'] leading-tight`}
                   />
                   <div className="text-[#d6d6d6] text-xl font-bold font-['Inter'] leading-tight">
                     PHA
@@ -912,9 +906,8 @@ export default function CountryPage() {
                     <div
                       className="absolute h-full bg-gradient-to-r from-[#155dee] to-[#45b3ff] rounded-full transition-all duration-200"
                       style={{
-                        width: `${
-                          ((Number(position.leverage) - 1) / 4) * 100
-                        }%`,
+                        width: `${((Number(position.leverage) - 1) / 4) * 100
+                          }%`,
                       }}
                     />
                     <input
@@ -935,11 +928,10 @@ export default function CountryPage() {
                         style={{ left: `${((value - 1) / 4) * 100}%` }}
                       >
                         <div
-                          className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                            value <= Number(position.leverage)
-                              ? "bg-white shadow-[0_0_8px_rgba(21,93,238,0.5)]"
-                              : "bg-[#404040]"
-                          }`}
+                          className={`w-2 h-2 rounded-full transition-all duration-200 ${value <= Number(position.leverage)
+                            ? "bg-white shadow-[0_0_8px_rgba(21,93,238,0.5)]"
+                            : "bg-[#404040]"
+                            }`}
                         />
                       </div>
                     ))}
@@ -1028,11 +1020,10 @@ export default function CountryPage() {
                   </div>
                 </div>
                 <button
-                  className={`self-stretch h-[60px] px-4 py-2 ${
-                    position.size && !isProcessing
-                      ? "bg-[#155dee]"
-                      : "bg-gray-600"
-                  } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
+                  className={`self-stretch h-[60px] px-4 py-2 ${position.size && !isProcessing
+                    ? "bg-[#155dee]"
+                    : "bg-gray-600"
+                    } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
                   disabled={!position.size || isProcessing}
                   onClick={handlePlaceTrade}
                 >
