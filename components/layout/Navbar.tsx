@@ -11,7 +11,7 @@ export default function Navbar() {
   // const { isConnected } = useAccount();
 
   return (
-    <nav className="bg-[#111214]">
+    <nav className="bg-[#111213]">
       <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center">
           <Link
