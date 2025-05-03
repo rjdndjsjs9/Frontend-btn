@@ -26,16 +26,16 @@ const countryData = {
     name: "USA",
     flagCode: "us",
     countryScore: 1839,
-    volume24h: "$1,500,000",
-    indexPrice: "$1,300,000",
+    volume24h: "1,500,000", //PTT 1,500,000
+    indexPrice: "$1,300,000", //PTT 1,300,000
     sentiment: "Bullish",
     changePercent: 3.2,
     trend: "up",
     markPrice: "3.87M",
     fundingRate: "0.01%",
-    openInterest: "$7,500,000",
-    openTrades: "$120,800",
-    volumes: "$200,000",
+    openInterest: "$7,500,000", //PTT 7,500,000
+    openTrades: "$120,800", //PTT 120,000
+    volumes: "$200,000", //PTT 200,000
     fundingCooldown: "00:37:40",
     fundingPercent: "0.3000%",
     description:
@@ -266,7 +266,7 @@ const countryData = {
 
 function CountryPositionsList() {
   const { address } = useAccount();
-  const { setRefreshPositionsFn } = usePositionsStore();
+  const { setRefreshPositionsFn, closePosition } = usePositionsStore();
 
   const {
     data: position,
@@ -280,6 +280,12 @@ function CountryPositionsList() {
     args: address ? ([] as const) : undefined,
   });
 
+  const { writeContract, isPending: isClosing } = useWriteContract();
+  const [closePositionHash, setClosePositionHash] = useState<`0x${string}` | undefined>();
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({ 
+    hash: closePositionHash 
+  });
+
   useEffect(() => {
     if (address) {
       refetch();
@@ -289,6 +295,42 @@ function CountryPositionsList() {
   useEffect(() => {
     setRefreshPositionsFn(() => refetch);
   }, [refetch, setRefreshPositionsFn]);
+
+  const handleClosePosition = async () => {
+    try {
+      if (!address || !position) {
+        throw new Error("Wallet not connected or no position found");
+      }
+
+      // Call smart contract to close position
+      await writeContract({
+        address: CONTRACT_ADDRESSES[50002],
+        abi: MockUSDC_ABI,
+        functionName: "closePosition",
+        args: [address],
+      });
+
+      // Update local state
+      closePosition(
+        position.positionId.toString(),
+        Number(position.entryPrice), // Convert bigint to number
+        0, // PnL will be calculated by the contract
+        0 // Funding fee will be calculated by the contract
+      );
+
+      // Refresh position data after closing
+      setTimeout(() => {
+        refetch();
+      }, 3000);
+    } catch (error) {
+      console.error("Error closing position:", error);
+      if (error instanceof Error) {
+        alert("Failed to close position: " + error.message);
+      } else {
+        alert("Failed to close position: " + JSON.stringify(error));
+      }
+    }
+  };
 
   if (isLoading) {
     return <div className="text-center text-gray-500 py-4">Loading...</div>;
@@ -331,6 +373,17 @@ function CountryPositionsList() {
               </span>
             </div>
           </div>
+          <button
+            onClick={handleClosePosition}
+            disabled={isClosing || isConfirming}
+            className={`w-full py-2 px-4 rounded-lg ${
+              isClosing || isConfirming
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-red-500 hover:bg-red-600"
+            } text-white font-medium transition-colors`}
+          >
+            {isClosing || isConfirming ? "Closing Position..." : "Close Position"}
+          </button>
         </div>
       ) : (
         <div className="text-center text-gray-500 py-4">No open positions</div>
