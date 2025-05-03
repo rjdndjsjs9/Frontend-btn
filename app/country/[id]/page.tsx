@@ -27,16 +27,16 @@ const countryData = {
     name: "USA",
     flagCode: "us",
     countryScore: 1839,
-    volume24h: "$1,500,000",
-    indexPrice: "$1,300,000",
+    volume24h: "1,500,000", //PTT 1,500,000
+    indexPrice: "$1,300,000", //PTT 1,300,000
     sentiment: "Bullish",
     changePercent: 3.2,
     trend: "up",
     markPrice: "3.87M",
     fundingRate: "0.01%",
-    openInterest: "$7,500,000",
-    openTrades: "$120,800",
-    volumes: "$200,000",
+    openInterest: "$7,500,000", //PTT 7,500,000
+    openTrades: "$120,800", //PTT 120,000
+    volumes: "$200,000", //PTT 200,000
     fundingCooldown: "00:37:40",
     fundingPercent: "0.3000%",
     description:
