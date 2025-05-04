@@ -28,8 +28,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto text-center mt-[120px] mb-16">
             <h1 className="font-bold mb-8 leading-tight tracking-tight">
               <div className="self-stretch text-center mb-[40px] bg-gradient-to-b from-[#f1f1ef] to-[#f1f1ef]/15 text-transparent tracking-[-3%] bg-clip-text justify-start text-[#f1f1ef] text-[68px] font-medium font-['Inter'] leading-[75.14px]">
-                Trade The Future of Nations with Perpetual Prediction On
-                CountryScore
+                Perpetual Prediction Market don't Bet but Trade your Country
               </div>
             </h1>
             <p className="w-flex text-center justify-center text-[#8b8b8b] text-lg font-normal font-['Inter'] leading-7">
