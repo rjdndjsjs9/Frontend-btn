@@ -5,11 +5,16 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "i.pravatar.cc",
+        pathname: "**",
+      },
+      {
+        protocol: "https",
         hostname: "flagcdn.com",
         pathname: "**",
       },
     ],
-    domains: ["flagcdn.com"],
+    domains: ["i.pravatar.cc", "flagcdn.com"],
   },
 };
 

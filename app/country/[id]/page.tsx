@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,7 +19,7 @@ import {
   USDC_ABI,
 } from "@/lib/contracts/constants";
 import { usePositionsStore } from "@/components/trading/PositionsContext";
-import { useTradeHistoryStore } from '@/components/dashboard/tradeHistoryStore';
+import { useTradeHistoryStore } from "@/components/dashboard/tradeHistoryStore";
 
 // Sample country data - in a real app, this would come from an API
 const countryData = {
@@ -282,27 +282,32 @@ interface ClosePositionModalProps {
 
 type StepType = 1 | 2 | 3 | 4;
 
-function ClosePositionModal({ isOpen, onClose, position, country }: ClosePositionModalProps) {
+function ClosePositionModal({
+  isOpen,
+  onClose,
+  position,
+  country,
+}: ClosePositionModalProps) {
   const [step, setStep] = useState<StepType>(1);
-  const [previousBalance] = useState(1000.00);
+  const [previousBalance] = useState(1000.0);
 
   const steps = {
     1: {
       title: "Close Position",
-      subtitle: "Are you sure you want to close this position?"
+      subtitle: "Are you sure you want to close this position?",
     },
     2: {
       title: "Confirm PnL",
-      subtitle: "Review your position's performance"
+      subtitle: "Review your position's performance",
     },
     3: {
       title: "Updated Balance",
-      subtitle: "Your new balance after closing position"
+      subtitle: "Your new balance after closing position",
     },
     4: {
       title: "Trade History",
-      subtitle: "Position successfully closed"
-    }
+      subtitle: "Position successfully closed",
+    },
   } as const;
 
   if (!isOpen) return null;
@@ -314,16 +319,23 @@ function ClosePositionModal({ isOpen, onClose, position, country }: ClosePositio
         <div className="flex justify-between items-center mb-8">
           {[1, 2, 3, 4].map((number) => (
             <div key={number} className="flex items-center">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                step === number ? 'bg-[#155dee] text-white' :
-                step > number ? 'bg-[#155dee] text-white' : 'bg-[#2d2d2e] text-gray-400'
-              }`}>
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                  step === number
+                    ? "bg-[#155dee] text-white"
+                    : step > number
+                    ? "bg-[#155dee] text-white"
+                    : "bg-[#2d2d2e] text-gray-400"
+                }`}
+              >
                 {number}
               </div>
               {number < 4 && (
-                <div className={`h-0.5 flex-1 ${
-                  step > number ? 'bg-[#155dee]' : 'bg-[#2d2d2e]'
-                }`} />
+                <div
+                  className={`h-0.5 flex-1 ${
+                    step > number ? "bg-[#155dee]" : "bg-[#2d2d2e]"
+                  }`}
+                />
               )}
             </div>
           ))}
@@ -331,7 +343,9 @@ function ClosePositionModal({ isOpen, onClose, position, country }: ClosePositio
 
         {/* Content */}
         <div className="text-center mb-6">
-          <h2 className="text-white text-xl font-semibold mb-2">{steps[step].title}</h2>
+          <h2 className="text-white text-xl font-semibold mb-2">
+            {steps[step].title}
+          </h2>
           <p className="text-gray-400 text-sm">{steps[step].subtitle}</p>
         </div>
 
@@ -340,7 +354,9 @@ function ClosePositionModal({ isOpen, onClose, position, country }: ClosePositio
           <div className="space-y-4 mb-6">
             <div className="flex justify-between">
               <span className="text-gray-400">Position</span>
-              <span className="text-white">{country.name} {position.isLong ? 'LONG' : 'SHORT'}</span>
+              <span className="text-white">
+                {country.name} {position.isLong ? "LONG" : "SHORT"}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Size</span>
@@ -377,7 +393,9 @@ function ClosePositionModal({ isOpen, onClose, position, country }: ClosePositio
         {step === 3 && (
           <div className="text-center mb-6">
             <div className="text-white text-3xl font-bold mb-2">$1,234.56</div>
-            <div className="text-gray-400">Previous: ${previousBalance.toFixed(2)}</div>
+            <div className="text-gray-400">
+              Previous: ${previousBalance.toFixed(2)}
+            </div>
           </div>
         )}
 
@@ -385,8 +403,12 @@ function ClosePositionModal({ isOpen, onClose, position, country }: ClosePositio
           <div className="space-y-4 mb-6">
             <div className="flex justify-between">
               <div>
-                <div className="text-white">{country.name} {position.isLong ? 'LONG' : 'SHORT'}</div>
-                <div className="text-gray-400 text-sm">Closed at {new Date().toLocaleTimeString()}</div>
+                <div className="text-white">
+                  {country.name} {position.isLong ? "LONG" : "SHORT"}
+                </div>
+                <div className="text-gray-400 text-sm">
+                  Closed at {new Date().toLocaleTimeString()}
+                </div>
               </div>
               <div className="text-right">
                 <div className="text-[#16b264]">+$0.00</div>
@@ -470,14 +492,22 @@ export default function CountryPage() {
 
   const { triggerRefresh } = usePositionsStore();
 
-  const { refetch: refetchPosition } = address
-    ? useReadContract({
-        address: CONTRACT_ADDRESSES[50002],
-        abi: MockUSDC_ABI,
-        functionName: "getPosition",
-        args: [] as const,
-      })
-    : { refetch: () => Promise.resolve() };
+  // Use the hook unconditionally
+  const { refetch: refetchPositionFromHook } = useReadContract({
+    address: CONTRACT_ADDRESSES[50002],
+    abi: MockUSDC_ABI,
+    functionName: "getPosition",
+    args: [] as const,
+    account: address, // Use account instead of enabled
+  });
+
+  // Create a wrapper function that conditionally calls the hook's refetch
+  const refetchPosition = () => {
+    if (address) {
+      return refetchPositionFromHook();
+    }
+    return Promise.resolve();
+  };
 
   useEffect(() => {
     if (hash && !isConfirming) {
@@ -530,7 +560,9 @@ export default function CountryPage() {
       console.log("Approving", sizeInWei, "tokens");
 
       // Generate unique trade ID
-      const newTradeId = `trade-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const newTradeId = `trade-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
       setTradeId(newTradeId);
 
       // Add trade to history immediately when placing
@@ -544,9 +576,9 @@ export default function CountryPage() {
         pnl: {
           amount: "$0.00",
           percentage: "0.0",
-          isProfit: true
+          isProfit: true,
         },
-        status: "Open"
+        status: "Open",
       });
 
       // 1. Approve contract to use token
@@ -607,8 +639,8 @@ export default function CountryPage() {
           pnl: {
             amount: "$0.00",
             percentage: "0.0",
-            isProfit: true
-          }
+            isProfit: true,
+          },
         });
       }
       setCloseStep(2 as StepType);
@@ -962,17 +994,20 @@ export default function CountryPage() {
               <div className="self-stretch px-2.5 py-2 bg-[#2d2d2e] rounded-[100px] flex">
                 <div className="self-stretch h-[61px] flex-1 flex items-center relative">
                   <div
-                    className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${position.isLong ? "justify-start" : "justify-end"
-                      }`}
+                    className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${
+                      position.isLong ? "justify-start" : "justify-end"
+                    }`}
                   >
                     <div
-                      className={`h-full w-1/2 ${position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
-                        } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
+                      className={`h-full w-1/2 ${
+                        position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
+                      } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
                     />
                   </div>
                   <div
-                    className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${position.isLong ? "text-white" : "text-[#545454]"
-                      }`}
+                    className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
+                      position.isLong ? "text-white" : "text-[#545454]"
+                    }`}
                     onClick={() => setPosition({ ...position, isLong: true })}
                   >
                     <div className="flex items-center gap-2">
@@ -994,8 +1029,9 @@ export default function CountryPage() {
                     </div>
                   </div>
                   <div
-                    className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${position.isLong ? "text-white" : "text-[#545454]"
-                      }`}
+                    className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
+                      position.isLong ? "text-white" : "text-[#545454]"
+                    }`}
                     onClick={() => setPosition({ ...position, isLong: false })}
                   >
                     <div className="flex items-center gap-2">
@@ -1034,8 +1070,9 @@ export default function CountryPage() {
                           </span>
                           <span className="text-white text-base font-medium font-['Inter'] leading-snug">
                             {walletBalance
-                              ? `${Number(walletBalance.formatted).toFixed(4)} ${walletBalance.symbol
-                              }`
+                              ? `${Number(walletBalance.formatted).toFixed(
+                                  4
+                                )} ${walletBalance.symbol}`
                               : "Loading..."}
                           </span>
                         </div>
@@ -1054,8 +1091,9 @@ export default function CountryPage() {
                       onChange={(e) =>
                         setPosition({ ...position, size: e.target.value })
                       }
-                      className={`flex-1 bg-transparent text-left outline-none border-none ${position.size ? "text-white" : "text-red-500"
-                        } text-xl font-bold font-['Inter'] leading-tight`}
+                      className={`flex-1 bg-transparent text-left outline-none border-none ${
+                        position.size ? "text-white" : "text-red-500"
+                      } text-xl font-bold font-['Inter'] leading-tight`}
                     />
                     <div className="text-[#d6d6d6] text-xl font-bold font-['Inter'] leading-tight">
                       PHA
@@ -1066,8 +1104,9 @@ export default function CountryPage() {
                       <div
                         className="absolute h-full bg-gradient-to-r from-[#155dee] to-[#45b3ff] rounded-full transition-all duration-200"
                         style={{
-                          width: `${((Number(position.leverage) - 1) / 4) * 100
-                            }%`,
+                          width: `${
+                            ((Number(position.leverage) - 1) / 4) * 100
+                          }%`,
                         }}
                       />
                       <input
@@ -1088,17 +1127,20 @@ export default function CountryPage() {
                           style={{ left: `${((value - 1) / 4) * 100}%` }}
                         >
                           <div
-                            className={`w-2 h-2 rounded-full transition-all duration-200 ${value <= Number(position.leverage)
-                              ? "bg-white shadow-[0_0_8px_rgba(21,93,238,0.5)]"
-                              : "bg-[#404040]"
-                              }`}
+                            className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                              value <= Number(position.leverage)
+                                ? "bg-white shadow-[0_0_8px_rgba(21,93,238,0.5)]"
+                                : "bg-[#404040]"
+                            }`}
                           />
                         </div>
                       ))}
                       <div
                         className="absolute -top-3 -ml-3 z-10 transition-all duration-200"
                         style={{
-                          left: `${((Number(position.leverage) - 1) / 4) * 100}%`,
+                          left: `${
+                            ((Number(position.leverage) - 1) / 4) * 100
+                          }%`,
                         }}
                       >
                         <div className="w-6 h-6 rounded-full bg-gradient-to-b from-[#155dee] to-[#45b3ff] shadow-[0_0_10px_rgba(21,93,238,0.5)] flex items-center justify-center">
@@ -1180,10 +1222,11 @@ export default function CountryPage() {
                     </div>
                   </div>
                   <button
-                    className={`self-stretch h-[60px] px-4 py-2 ${position.size && !isProcessing
-                      ? "bg-[#155dee]"
-                      : "bg-gray-600"
-                      } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
+                    className={`self-stretch h-[60px] px-4 py-2 ${
+                      position.size && !isProcessing
+                        ? "bg-[#155dee]"
+                        : "bg-gray-600"
+                    } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
                     disabled={!position.size || isProcessing}
                     onClick={handlePlaceTrade}
                   >
@@ -1363,11 +1406,13 @@ export default function CountryPage() {
                 Positions
               </div>
               {showPosition && closeStep === null && (
-                <div 
+                <div
                   className="w-[116px] h-10 px-[10.75px] py-1 rounded-[67.21px] shadow-[0px_0.6720554232597351px_1.3441108465194702px_0px_rgba(0,0,0,0.12)] outline outline-1 outline-offset-[-1px] outline-[#155dee] flex justify-center items-center gap-[2.69px] cursor-pointer"
                   onClick={() => setCloseStep(1)}
                 >
-                  <div className="text-center justify-center text-[#155dee] text-base font-semibold font-['Inter'] leading-none">Close</div>
+                  <div className="text-center justify-center text-[#155dee] text-base font-semibold font-['Inter'] leading-none">
+                    Close
+                  </div>
                 </div>
               )}
             </div>
@@ -1379,33 +1424,53 @@ export default function CountryPage() {
                 <div className="self-stretch py-4 inline-flex justify-between items-center">
                   <div className="w-[71px] flex justify-between items-center">
                     <div className="w-4 h-[15px] bg-[#155dee] rounded-[100px]" />
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">{country.name}</div>
+                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
+                      {country.name}
+                    </div>
                   </div>
-                  <div className="justify-start text-[#b21616] text-sm font-normal font-['Inter'] leading-tight">-$0.24 (-0.0%)</div>
+                  <div className="justify-start text-[#b21616] text-sm font-normal font-['Inter'] leading-tight">
+                    -$0.24 (-0.0%)
+                  </div>
                 </div>
                 <div className="self-stretch py-3.5 inline-flex justify-between items-center">
                   <div className="w-[101px] flex justify-between items-center">
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">Position Size</div>
+                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
+                      Position Size
+                    </div>
                   </div>
-                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">${position.size}</div>
+                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">
+                    ${position.size}
+                  </div>
                 </div>
                 <div className="self-stretch py-3.5 inline-flex justify-between items-center">
                   <div className="w-[101px] flex justify-between items-center">
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">Entry Price</div>
+                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
+                      Entry Price
+                    </div>
                   </div>
-                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">{country.markPrice}</div>
+                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">
+                    {country.markPrice}
+                  </div>
                 </div>
                 <div className="self-stretch py-3.5 inline-flex justify-between items-center">
                   <div className="w-[101px] flex justify-between items-center">
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">Liquidation Price</div>
+                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
+                      Liquidation Price
+                    </div>
                   </div>
-                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">{country.liquidationPrice}</div>
+                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">
+                    {country.liquidationPrice}
+                  </div>
                 </div>
                 <div className="self-stretch py-3.5 inline-flex justify-between items-center">
                   <div className="w-[101px] flex justify-between items-center">
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">Fees</div>
+                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
+                      Fees
+                    </div>
                   </div>
-                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">$2.50</div>
+                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">
+                    $2.50
+                  </div>
                 </div>
                 <div className="self-stretch h-px relative">
                   <div className="w-[449px] h-px left-0 top-0 absolute bg-[#323232]" />
@@ -1413,9 +1478,13 @@ export default function CountryPage() {
                 <div className="self-stretch py-4 inline-flex justify-between items-center">
                   <div className="w-[101px] flex justify-between items-center">
                     <div className="w-4 h-[15px] bg-[#155dee] rounded-[100px]" />
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">Abstract</div>
+                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
+                      Abstract
+                    </div>
                   </div>
-                  <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">$0.24 (+0.5%)</div>
+                  <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">
+                    $0.24 (+0.5%)
+                  </div>
                 </div>
               </div>
             ) : closeStep ? (
@@ -1424,16 +1493,23 @@ export default function CountryPage() {
                 <div className="flex justify-between items-center mb-8">
                   {[1, 2, 3, 4].map((number) => (
                     <div key={number} className="flex items-center">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        closeStep === number ? 'bg-[#155dee] text-white' :
-                        closeStep > number ? 'bg-[#155dee] text-white' : 'bg-[#2d2d2e] text-gray-400'
-                      }`}>
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                          closeStep === number
+                            ? "bg-[#155dee] text-white"
+                            : closeStep > number
+                            ? "bg-[#155dee] text-white"
+                            : "bg-[#2d2d2e] text-gray-400"
+                        }`}
+                      >
                         {number}
                       </div>
                       {number < 4 && (
-                        <div className={`h-0.5 flex-1 ${
-                          closeStep > number ? 'bg-[#155dee]' : 'bg-[#2d2d2e]'
-                        }`} />
+                        <div
+                          className={`h-0.5 flex-1 ${
+                            closeStep > number ? "bg-[#155dee]" : "bg-[#2d2d2e]"
+                          }`}
+                        />
                       )}
                     </div>
                   ))}
@@ -1444,13 +1520,19 @@ export default function CountryPage() {
                   {closeStep === 1 && (
                     <>
                       <div className="text-center mb-6">
-                        <h2 className="text-white text-xl font-semibold mb-2">Close Position</h2>
-                        <p className="text-gray-400 text-sm">Are you sure you want to close this position?</p>
+                        <h2 className="text-white text-xl font-semibold mb-2">
+                          Close Position
+                        </h2>
+                        <p className="text-gray-400 text-sm">
+                          Are you sure you want to close this position?
+                        </p>
                       </div>
                       <div className="space-y-4">
                         <div className="flex justify-between">
                           <span className="text-gray-400">Position</span>
-                          <span className="text-white">{country.name} {position.isLong ? 'LONG' : 'SHORT'}</span>
+                          <span className="text-white">
+                            {country.name} {position.isLong ? "LONG" : "SHORT"}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Size</span>
@@ -1458,11 +1540,15 @@ export default function CountryPage() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Entry Price</span>
-                          <span className="text-white">{country.markPrice}</span>
+                          <span className="text-white">
+                            {country.markPrice}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Mark Price</span>
-                          <span className="text-white">{country.markPrice}</span>
+                          <span className="text-white">
+                            {country.markPrice}
+                          </span>
                         </div>
                       </div>
                     </>
@@ -1471,11 +1557,17 @@ export default function CountryPage() {
                   {closeStep === 2 && (
                     <>
                       <div className="text-center mb-6">
-                        <h2 className="text-white text-xl font-semibold mb-2">Confirm PnL</h2>
-                        <p className="text-gray-400 text-sm">Review your position's performance</p>
+                        <h2 className="text-white text-xl font-semibold mb-2">
+                          Confirm PnL
+                        </h2>
+                        <p className="text-gray-400 text-sm">
+                          Review your position's performance
+                        </p>
                       </div>
                       <div className="text-center mb-6">
-                        <div className="text-[#16b264] text-2xl font-bold">+$0.00</div>
+                        <div className="text-[#16b264] text-2xl font-bold">
+                          +$0.00
+                        </div>
                         <div className="text-[#16b264]">(+0.0%)</div>
                       </div>
                       <div className="space-y-4">
@@ -1494,11 +1586,17 @@ export default function CountryPage() {
                   {closeStep === 3 && (
                     <>
                       <div className="text-center mb-6">
-                        <h2 className="text-white text-xl font-semibold mb-2">Updated Balance</h2>
-                        <p className="text-gray-400 text-sm">Your new balance after closing position</p>
+                        <h2 className="text-white text-xl font-semibold mb-2">
+                          Updated Balance
+                        </h2>
+                        <p className="text-gray-400 text-sm">
+                          Your new balance after closing position
+                        </p>
                       </div>
                       <div className="text-center">
-                        <div className="text-white text-3xl font-bold mb-2">$1,234.56</div>
+                        <div className="text-white text-3xl font-bold mb-2">
+                          $1,234.56
+                        </div>
                         <div className="text-gray-400">Previous: $1,000.00</div>
                       </div>
                     </>
@@ -1507,13 +1605,21 @@ export default function CountryPage() {
                   {closeStep === 4 && (
                     <>
                       <div className="text-center mb-6">
-                        <h2 className="text-white text-xl font-semibold mb-2">Trade History</h2>
-                        <p className="text-gray-400 text-sm">Position successfully closed</p>
+                        <h2 className="text-white text-xl font-semibold mb-2">
+                          Trade History
+                        </h2>
+                        <p className="text-gray-400 text-sm">
+                          Position successfully closed
+                        </p>
                       </div>
                       <div className="flex justify-between">
                         <div>
-                          <div className="text-white">{country.name} {position.isLong ? 'LONG' : 'SHORT'}</div>
-                          <div className="text-gray-400 text-sm">Closed at {new Date().toLocaleTimeString()}</div>
+                          <div className="text-white">
+                            {country.name} {position.isLong ? "LONG" : "SHORT"}
+                          </div>
+                          <div className="text-gray-400 text-sm">
+                            Closed at {new Date().toLocaleTimeString()}
+                          </div>
                         </div>
                         <div className="text-right">
                           <div className="text-[#16b264]">+$0.00</div>
@@ -1569,7 +1675,9 @@ export default function CountryPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-center text-gray-500 py-4">No open positions</div>
+              <div className="text-center text-gray-500 py-4">
+                No open positions
+              </div>
             )}
           </div>
         </div>

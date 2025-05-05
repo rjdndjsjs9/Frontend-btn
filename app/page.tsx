@@ -11,8 +11,6 @@ export default function LandingPage() {
   // const { isConnected } = useAccount();
   const router = useRouter();
 
-
-
   return (
     <div className="flex flex-col min-h-screen bg-[#111214] text-white overflow-hidden">
       {/* Hero Section - Removed secondary header with logo and Connect Wallet button */}
@@ -28,7 +26,8 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto text-center mt-[120px] mb-16">
             <h1 className="font-bold mb-8 leading-tight tracking-tight">
               <div className="self-stretch text-center mb-[40px] bg-gradient-to-b from-[#f1f1ef] to-[#f1f1ef]/15 text-transparent tracking-[-3%] bg-clip-text justify-start text-[#f1f1ef] text-[68px] font-medium font-['Inter'] leading-[75.14px]">
-                First Perpetual Prediction Market Don't Bet But Trade Your Country
+                First Perpetual Prediction Market Don&apos;t Bet But Trade Your
+                Country
               </div>
             </h1>
             <p className="w-flex text-center justify-center text-[#8b8b8b] text-lg font-normal font-['Inter'] leading-7">
@@ -234,10 +233,12 @@ export default function LandingPage() {
                       Rank #1
                     </div>
                     <div className="flex justify-start items-center gap-3">
-                      <img
+                      <Image
                         className="w-8 h-8 rounded-full object-cover"
                         src="https://i.pravatar.cc/150?img=1"
                         alt="User 1"
+                        width={32}
+                        height={32}
                       />
                       <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
                         0xMeiline
@@ -255,10 +256,12 @@ export default function LandingPage() {
                       Rank #2
                     </div>
                     <div className="flex justify-start items-center gap-3">
-                      <img
+                      <Image
                         className="w-8 h-8 rounded-full object-cover"
                         src="https://i.pravatar.cc/150?img=2"
                         alt="User 2"
+                        width={32}
+                        height={32}
                       />
                       <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
                         0xClara
@@ -278,10 +281,12 @@ export default function LandingPage() {
                       Rank #3
                     </div>
                     <div className="flex justify-start items-center gap-3">
-                      <img
+                      <Image
                         className="w-8 h-8 rounded-full object-cover"
                         src="https://i.pravatar.cc/150?img=3"
                         alt="User 3"
+                        width={32}
+                        height={32}
                       />
                       <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
                         0xEdward
@@ -301,10 +306,12 @@ export default function LandingPage() {
                       Rank #167
                     </div>
                     <div className="flex justify-start items-center gap-3">
-                      <img
+                      <Image
                         className="w-8 h-8 rounded-full object-cover"
                         src="https://i.pravatar.cc/150?img=4"
                         alt="User 4"
+                        width={32}
+                        height={32}
                       />
                       <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
                         0xCeline
@@ -486,10 +493,12 @@ export default function LandingPage() {
               <div className="w-[336px] h-[274px] p-6 left-[266.50px] top-[32px] absolute bg-[#202326] rounded-3xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] flex flex-col justify-between items-start">
                 <div className="self-stretch inline-flex justify-end items-center gap-2.5">
                   <div className="w-[35px] h-[35px] relative rounded-[35.35px] overflow-hidden">
-                    <img
+                    <Image
                       className="w-full h-full object-cover"
                       src="https://flagcdn.com/w80/us.png"
                       alt="USA Flag"
+                      width={32}
+                      height={32}
                     />
                   </div>
                   <div className="flex-1 justify-start text-white text-lg font-medium font-['Inter']">

@@ -12,18 +12,16 @@ export function PendingTransactionIndicator() {
   const [pendingTxs, setPendingTxs] = useState<any[]>([]);
   // const { waitForTransaction } = useContract();
   // const { fetchPositions } = usePositionStore();
-// 
+  //
   useEffect(() => {
     // Initial load
     // const txs = PendingTransactionManager.getPendingTransactions();
     // setPendingTxs(txs);
-
     // Set up interval to check
     // const checkInterval = setInterval(() => {
     //   const currentTxs = PendingTransactionManager.getPendingTransactions();
     //   setPendingTxs(currentTxs);
     // }, 10000); // Check every 10 seconds
-
     // return () => clearInterval(checkInterval);
   }, []);
 
