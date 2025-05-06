@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -468,7 +468,6 @@ function ClosePositionModal({
 
 export default function CountryPage() {
   const { id } = useParams();
-  const router = useRouter();
   const country = countryData[id as keyof typeof countryData];
   const { addTrade, updateTrade } = useTradeHistoryStore();
   const [tradeId, setTradeId] = useState<string>("");

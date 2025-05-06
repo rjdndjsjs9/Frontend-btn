@@ -77,7 +77,7 @@ export default function LandingPage() {
             <div className="md:w-1/4 mb-12 md:mb-0 flex flex-col">
               <h2 className="font-bold leading-tight">
                 <div className="w-[394px] justify-start bg-gradient-to-b from-[#f1f1ef] to-[#f1f1ef]/20 text-[#f1f1ef] text-[68px] text-transparent bg-clip-text font-medium font-['Inter'] tracking-[-3%] leading-[75.14px]">
-                  Why We're Different: A New Era of Trading
+                  Why We&apos;re Different: A New Era of Trading
                 </div>
               </h2>
             </div>

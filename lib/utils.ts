@@ -1,5 +1,6 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+// Remove the unused imports
+// import { type ClassValue, clsx } from "clsx";
+// import { twMerge } from "tailwind-merge";
 
 export function formatCurrency(
   amount: number,
@@ -34,7 +35,10 @@ export function generateId(): string {
 // Transaction status management with localStorage
 export const PendingTransactionManager = {
   // Save a pending transaction to localStorage
-  savePendingTransaction: (txHash: string, positionData: any) => {
+  savePendingTransaction: (
+    txHash: string,
+    positionData: Record<string, unknown>
+  ) => {
     try {
       const pendingTxs = PendingTransactionManager.getPendingTransactions();
       pendingTxs.push({
@@ -63,7 +67,9 @@ export const PendingTransactionManager = {
   removePendingTransaction: (txHash: string) => {
     try {
       const pendingTxs = PendingTransactionManager.getPendingTransactions();
-      const updatedTxs = pendingTxs.filter((tx: any) => tx.txHash !== txHash);
+      const updatedTxs = pendingTxs.filter(
+        (tx: { txHash: string }) => tx.txHash !== txHash
+      );
       localStorage.setItem("pendingTransactions", JSON.stringify(updatedTxs));
       console.log(`Removed transaction ${txHash} from pending list`);
     } catch (e) {
@@ -75,7 +81,7 @@ export const PendingTransactionManager = {
   isPendingTransaction: (txHash: string) => {
     try {
       const pendingTxs = PendingTransactionManager.getPendingTransactions();
-      return pendingTxs.some((tx: any) => tx.txHash === txHash);
+      return pendingTxs.some((tx: { txHash: string }) => tx.txHash === txHash);
     } catch (e) {
       console.error("Failed to check pending transaction:", e);
       return false;
@@ -88,7 +94,7 @@ export const PendingTransactionManager = {
       const pendingTxs = PendingTransactionManager.getPendingTransactions();
       const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
       const updatedTxs = pendingTxs.filter(
-        (tx: any) => tx.timestamp > oneDayAgo
+        (tx: { timestamp: number }) => tx.timestamp > oneDayAgo
       );
 
       if (updatedTxs.length !== pendingTxs.length) {
