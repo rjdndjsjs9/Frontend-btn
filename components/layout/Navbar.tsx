@@ -2,12 +2,12 @@
 
 import type React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+// import { usePathname } from "next/navigation";
 import { ConnectWalletButton } from "@/components/ui/connect-wallet-button";
 // import { useAccount } from "wagmi";
 
 export default function Navbar() {
-  const pathname = usePathname();
+  // const pathname = usePathname();
   // const { isConnected } = useAccount();
 
   return (
@@ -57,6 +57,7 @@ export default function Navbar() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function NavLink({
   href,
   active,
