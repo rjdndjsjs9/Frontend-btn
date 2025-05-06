@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
  * Component that visually shows pending transactions and their status
  */
 export function PendingTransactionIndicator() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [pendingTxs, setPendingTxs] = useState<any[]>([]);
   // const { waitForTransaction } = useContract();
   // const { fetchPositions } = usePositionStore();

@@ -57,6 +57,7 @@ export default function Navbar() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function NavLink({
   href,
   active,

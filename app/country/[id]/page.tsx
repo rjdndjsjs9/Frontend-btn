@@ -282,6 +282,7 @@ interface ClosePositionModalProps {
 
 type StepType = 1 | 2 | 3 | 4;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ClosePositionModal({
   isOpen,
   onClose,
