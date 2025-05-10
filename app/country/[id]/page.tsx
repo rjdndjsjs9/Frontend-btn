@@ -11,7 +11,8 @@ import {
   useAccount,
   useBalance,
 } from "wagmi";
-import { parseEther } from "viem";
+import { parseUnits } from "viem";
+
 import {
   CONTRACT_ADDRESSES,
   MockUSDC_ABI,
@@ -488,6 +489,7 @@ export default function CountryPage() {
   const { address } = useAccount();
   const { data: walletBalance, refetch: refetchBalance } = useBalance({
     address,
+    token: "0x2904921988f84BBD764D585e6f0249869FDEb25C",
   });
 
   const { triggerRefresh } = usePositionsStore();
@@ -554,8 +556,16 @@ export default function CountryPage() {
         throw new Error("Wallet not connected");
       }
 
-      const sizeInWei = parseEther(
-        (Number(position.size) * Number(position.leverage)).toString()
+      const decimals = 6;
+
+      // const sizeInWei = parseEther(
+      //   (Number(position.size) * Number(position.leverage)).toString(),
+      //   decimals
+      // );
+
+      const sizeInWei = parseUnits(
+        (Number(position.size) * Number(position.leverage)).toString(),
+        decimals
       );
       console.log("Approving", sizeInWei, "tokens");
 
@@ -1096,7 +1106,7 @@ export default function CountryPage() {
                       } text-xl font-bold font-['Inter'] leading-tight`}
                     />
                     <div className="text-[#d6d6d6] text-xl font-bold font-['Inter'] leading-tight">
-                      PHA
+                      USDC
                     </div>
                   </div>
                   <div className="self-stretch py-6 relative inline-flex justify-start items-center gap-3">
