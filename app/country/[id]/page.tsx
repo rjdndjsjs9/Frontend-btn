@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+
 import {
   useReadContract,
   useWriteContract,
@@ -13,11 +14,10 @@ import {
 } from "wagmi";
 import { parseUnits } from "viem";
 
-import {
-  CONTRACT_ADDRESSES,
-  MockUSDC_ABI,
+import {  
   USDC_ADDRESSES,
   USDC_ABI,
+  MockUSDC_ABI,
 } from "@/lib/contracts/constants";
 import { usePositionsStore } from "@/components/trading/PositionsContext";
 import { useTradeHistoryStore } from "@/components/dashboard/tradeHistoryStore";
@@ -496,7 +496,7 @@ export default function CountryPage() {
 
   // Use the hook unconditionally
   const { refetch: refetchPositionFromHook } = useReadContract({
-    address: CONTRACT_ADDRESSES[50002],
+    address: USDC_ADDRESSES[50002],
     abi: MockUSDC_ABI,
     functionName: "getPosition",
     args: [] as const,
@@ -596,7 +596,7 @@ export default function CountryPage() {
         address: USDC_ADDRESSES[50002],
         abi: USDC_ABI,
         functionName: "approve",
-        args: [CONTRACT_ADDRESSES[50002], sizeInWei],
+        args: [USDC_ADDRESSES[50002], sizeInWei],
       });
       console.log("Approval TX:", approvalTx);
 
@@ -605,7 +605,7 @@ export default function CountryPage() {
 
       // 2. Open Position
       const tradeTx = await writeContract({
-        address: CONTRACT_ADDRESSES[50002],
+        address: USDC_ADDRESSES[50002],
         abi: MockUSDC_ABI,
         functionName: "openPosition",
         args: [
@@ -1571,7 +1571,7 @@ export default function CountryPage() {
                           Confirm PnL
                         </h2>
                         <p className="text-gray-400 text-sm">
-                          Review your position's performance
+                          Review your position&apos;s performance
                         </p>
                       </div>
                       <div className="text-center mb-6">

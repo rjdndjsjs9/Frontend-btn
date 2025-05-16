@@ -1,4 +1,7 @@
+/*
 import { defineChain } from 'viem'
+
+// Commented out Pharos chain configuration
 
 export const pharos = defineChain({
     id: 50002,
@@ -17,5 +20,5 @@ export const pharos = defineChain({
     blockExplorers: {
         default: { name: 'Explorer', url: 'https://pharosscan.xyz' },
     },
-
 })
+*/
