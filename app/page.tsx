@@ -61,7 +61,7 @@ export default function RootPage() {
                     </div>
                   </h1>
                   <p className="w-flex text-center justify-center text-[#8b8b8b] text-lg font-normal font-['Inter'] leading-7">
-                    Unlock the power of perpetual contracts based on a country's
+                    Unlock the power of perpetual contracts based on a country&apos;s
                     progress, with predictions driven by key indicators such as
                     GDP, inflation, currency rates and more. Trade long or
                     short, with no time limits on your positions.
@@ -173,7 +173,7 @@ export default function RootPage() {
                           <div className="self-stretch inline-flex justify-start items-center gap-4">
                             <div className="flex-1 justify-start text-[#777777] text-base font-medium font-['Inter'] leading-7">
                               Unlike traditional markets, BeTheNation.Fun lets
-                              you predict a country's future by evaluating key
+                              you predict a country&apos;s future by evaluating key
                               economic indicators such as GDP, inflation.
                             </div>
                           </div>
@@ -206,7 +206,7 @@ export default function RootPage() {
                             <div className="flex-1 justify-start text-[#777777] text-base font-medium font-['Inter'] leading-7">
                               With leverage up to 5x, you can control a larger
                               position with a smaller capital investment.
-                              Whether you're trading on economic growth or
+                              Whether you&apos;re trading on economic growth or
                               decline.
                             </div>
                           </div>
@@ -532,7 +532,7 @@ export default function RootPage() {
                         <div className="flex-1 justify-start text-[#777777] text-base font-medium font-['Inter'] leading-7">
                           Interactive charts showing GDP progress, currency
                           exchange rates, and market forecasts for the countries
-                          you're interested in.
+                          you&apos;re interested in.
                         </div>
                       </div>
                     </div>
@@ -617,7 +617,7 @@ export default function RootPage() {
                   </div>
 
                   <p className="text-[#8b8b8b] mb-10 max-w-[1027px] mx-auto text-base">
-                    Unlock the power of perpetual contracts based on a country's
+                    Unlock the power of perpetual contracts based on a country&apos;s
                     progress, with predictions driven by key indicators such as
                     GDP, inflation, currency exchange, and more. Trade long or
                     short, with no expiration on your positions.
@@ -645,7 +645,7 @@ export default function RootPage() {
                     </h3>
                     <p className="text-gray-400 text-sm max-w-xs">
                       BeTheNation.Fun lets users trade GDP-based derivatives on
-                      the world's leading economies, with this proof-of-concept
+                      the world&apos;s leading economies, with this proof-of-concept
                       demo.
                     </p>
                   </div>
