@@ -15,7 +15,7 @@ Unlock the power of perpetual contracts based on a country's progress, with pred
 - **Off-Chain Backend :** Express (Mongodb NoSql Database, Handling API and Formula Functions)
 - **Blockchain:** EVM
 - **Smart Contract Framework:** Foundry (Solidity)
-- **Authentication & Wallet Abstraction:** Dynamic.xyz
+- **Authentication & Wallet Abstraction:** Wagmi
 - **Deployment:** Cloudflare Pages (Frontend), Convex Cloud (Backend)
 
 ## Architecture Overview
