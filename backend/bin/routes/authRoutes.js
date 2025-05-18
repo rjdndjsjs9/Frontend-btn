@@ -6,6 +6,7 @@ const inflationController = require("../../module/controllers/inflationControlle
 const indexSahamController = require("../../module/controllers/indexSahamController");
 const obligasiController = require("../../module/controllers/obligasiController");
 const finalScoreController = require("../../module/controllers/finalScoreController");
+const tradeHistoryController = require("../../module/controllers/tradeHistoryController");
 const basicAuth = require('../middleware/basic_auth_helper');
 
 router.post("/v1/register", authController.register);
@@ -15,5 +16,7 @@ router.get("/v1/index-saham", indexSahamController.get);
 router.get("/v1/obligasi", obligasiController.get);
 router.post("/v1/final-score/calculate", finalScoreController.calculate);
 router.get("/v1/final-score/latest", finalScoreController.getLatest);
+router.get("/v1/trade-history/:userId", tradeHistoryController.getByUserId);
+router.post("/v1/trade-history", tradeHistoryController.store);
 
 module.exports = router;
