@@ -2,6 +2,7 @@
 
 [![X](https://img.shields.io/badge/Twitter-@bethenation-%231DA1F2?logo=x&style=flat)](https://x.com/bethenation_fun)
 [![Website](https://img.shields.io/badge/Website-BeTheNation-%230077B5?logo=web&style=flat)](https://bethenation.netlify.app)
+
 <div align="center">
   <img src="./public/btn.png" alt="BeTheNation Logo">
 </div>
@@ -28,7 +29,9 @@ BeTheNation employs a **hybrid Web2.5 architecture**:
 This approach combines the ease of development and rich UX of Web2 technologies with the security and transparency of Web3 for critical financial interactions.
 
 ## Prerequisites
+
 Ensure you have the following installed:
+
 ```bash
 Node.js: v18.18.0 or higher
 pnpm: (Recommended package manager) npm install -g pnpm
@@ -38,19 +41,31 @@ Backend: Expressjs
 ```
 
 ## Installation
+
 Clone the repository:
+
 ```bash
 git clone https://github.com/BeTheNation/Frontend-btn.git
 cd Frontend-btn
 ```
 
 Install dependencies:
+
 ```bash
 npm install
 
 cd backend
 npm install
 ```
+
+## Claiming Faucet
+
+To get test tokens for development:
+
+1. Click the "Faucet" button located next to the connect wallet button in the top navigation
+2. This will redirect you to the Base network faucet documentation
+3. Follow the instructions on the Base documentation page to claim your test tokens
+
 First, run the development server on root directory:
 
 ```bash
