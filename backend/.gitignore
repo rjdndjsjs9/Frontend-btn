@@ -1,5 +1,11 @@
-.env
+# Dependency directories
 node_modules
 
+# Local env files
+backend/.env
+
+# Lock files
 package-lock.json
+
+# Notes or temp files
 saran.txt
