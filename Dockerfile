@@ -1,13 +1,12 @@
-# Gunakan image node
 FROM node:20
 
-# Set direktori kerja ke dalam container
+# Set working directory
 WORKDIR /app
 
-# Salin hanya folder backend ke dalam container
-COPY backend/ ./
+# Copy backend files dari app/backend ke dalam container
+COPY app/backend/ ./
 
-# Install dependensi
+# Install dependencies
 RUN npm install
 
 # Jalankan aplikasi
