@@ -7,12 +7,14 @@ const global_config = require("./bin/helper/global_config");
 const logger = require('./bin/helper/logger');
 const websocketService = require('./module/services/websocketService');
 const blockchainService = require('./module/services/blockchainService');
+const cors = require('cors');
 
 dotenv.config();
 const app = express();
 const port = global_config.get("/port");
 const mongoUri = global_config.get("/mongo");
 
+app.use(cors());
 app.use(express.json());
 
 app.use("/api", authRoutes);
