@@ -3,13 +3,6 @@ import MockUSDC_ABI_Imported from "./MockUSDC.json";
 
 
 // Address of Trading Contract
-/*
-export const CONTRACT_ADDRESSES: Record<number, Address> = {
-  // Pharos deployment
-  50002: "0xb8e29BB907E0cb9aBfbAa9233EfE44dF07364a2A", // 
-};
-*/
-// Address of Trading Contract
 export const USDC_ADDRESSES: Record<number, Address> = {
   // Base  deployment
   50002: "0x2904921988f84BBD764D585e6f0249869FDEb25C", 
