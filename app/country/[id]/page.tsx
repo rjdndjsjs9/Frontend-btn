@@ -14,13 +14,14 @@ import {
 } from "wagmi";
 import { parseUnits } from "viem";
 
-import {  
+import {
   USDC_ADDRESSES,
   USDC_ABI,
   MockUSDC_ABI,
 } from "@/lib/contracts/constants";
 import { usePositionsStore } from "@/components/trading/PositionsContext";
 import { useTradeHistoryStore } from "@/components/dashboard/tradeHistoryStore";
+import HistoryTable from "@/components/dashboard/HistoryTable"; // Make sure this import exists
 
 // Sample country data - in a real app, this would come from an API
 const countryData = {
@@ -281,7 +282,7 @@ interface ClosePositionModalProps {
   };
 }
 
-type StepType = 1 | 2 | 3 | 4;
+type StepType = 1 | 2 | 3 | 4 | null;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ClosePositionModal({
@@ -310,9 +311,13 @@ function ClosePositionModal({
       title: "Trade History",
       subtitle: "Position successfully closed",
     },
+    99: {
+      title: "Trade History",
+      subtitle: "View your trade history",
+    },
   } as const;
 
-  if (!isOpen) return null;
+  if (!isOpen || step === null) return null; // <-- Add this guard
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -481,7 +486,7 @@ export default function CountryPage() {
   });
 
   const [showPosition, setShowPosition] = useState(false);
-  const [closeStep, setCloseStep] = useState<1 | 2 | 3 | 4 | null>(null);
+  const [closeStep, setCloseStep] = useState<1 | 2 | 3 | 4 | 99 | null>(null);
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
@@ -640,6 +645,12 @@ export default function CountryPage() {
 
   const handleCloseStepContinue = () => {
     if (closeStep === 1) {
+      setCloseStep(2); // Go to step 2
+    } else if (closeStep === 2) {
+      setCloseStep(3); // Go to step 3
+    } else if (closeStep === 3) {
+      setCloseStep(4); // Go to step 4
+    } else if (closeStep === 4) {
       // Update the existing trade's status to Closed
       if (tradeId) {
         updateTrade(tradeId, {
@@ -653,17 +664,18 @@ export default function CountryPage() {
           },
         });
       }
-      setCloseStep(2 as StepType);
-    } else if (closeStep === 2) {
-      setCloseStep(3 as StepType);
-    } else if (closeStep === 3) {
-      setCloseStep(4 as StepType);
-    } else if (closeStep === 4) {
-      setCloseStep(null);
+      setCloseStep(99); // Go to history table
       setShowPosition(false);
       setTradeId(""); // Clear the trade ID
+    } else if (closeStep === 99) {
+      setCloseStep(null); // Close the entire flow
     }
   };
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!country) {
     return <div>Country not found</div>;
@@ -671,11 +683,11 @@ export default function CountryPage() {
 
   return (
     <>
-      <div className="container mx-auto p-6 bg-[#111214] min-h-screen">
+      <div className="container mx-auto p-2 sm:p-6 bg-[#111214] min-h-screen">
         {/* Back to Dashboard button */}
-        <Link href="/dashboard" className="block mb-8">
-          <div className="inline-flex justify-start items-center gap-[23px]">
-            <div className="w-[58px] h-[58px] p-[9.67px] bg-[#1d1f22] rounded-[9.67px] flex justify-center items-center">
+        <Link href="/dashboard" className="block mb-4 sm:mb-8">
+          <div className="inline-flex justify-start items-center gap-[12px] sm:gap-[23px]">
+            <div className="w-[45px] h-[45px] sm:w-[58px] sm:h-[58px] p-[9.67px] bg-[#1d1f22] rounded-[9.67px] flex justify-center items-center">
               <svg
                 width="24.72"
                 height="42.9"
@@ -692,41 +704,43 @@ export default function CountryPage() {
                 />
               </svg>
             </div>
-            <div className="text-right justify-start text-[#d6d6d6] text-xl font-medium font-['Inter'] leading-tight">
+            <div className="text-right justify-start text-[#d6d6d6] text-base sm:text-xl font-medium font-['Inter'] leading-tight">
               Back To Dashboard
             </div>
           </div>
         </Link>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Header Panel */}
-          <div className="flex items-center justify-between gap-6 px-9 py-[18.86px] bg-[#1d1f22] rounded-xl shadow-[0px_0.7857142686843872px_1.5714285373687744px_0px_rgba(16,24,40,0.06)] shadow-[0px_0.7857142686843872px_2.357142925262451px_0px_rgba(16,24,40,0.10)] outline outline-[0.79px] outline-offset-[-0.79px] outline-[#323232] transition-all duration-200 hover:shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 px-4 sm:px-9 py-4 sm:py-[18.86px] bg-[#1d1f22] rounded-xl shadow-[0px_0.7857142686843872px_1.5714285373687744px_0px_rgba(16,24,40,0.06)] shadow-[0px_0.7857142686843872px_2.357142925262451px_0px_rgba(16,24,40,0.10)] outline outline-[0.79px] outline-offset-[-0.79px] outline-[#323232] transition-all duration-200 hover:shadow-lg">
             {/* Flag Section */}
-            <div className="flex-shrink-0 w-[62.29px] h-[62.29px] relative">
-              <div className="absolute inset-0 rounded-full overflow-hidden bg-[#d7d7d7]">
-                <Image
-                  src={`https://flagcdn.com/w160/${country.flagCode.toLowerCase()}.png`}
-                  alt={`${country.name} flag`}
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-cover scale-110"
-                  priority
-                />
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="w-[50px] h-[50px] sm:w-[62.29px] sm:h-[62.29px] relative">
+                <div className="absolute inset-0 rounded-full overflow-hidden bg-[#d7d7d7]">
+                  <Image
+                    src={`https://flagcdn.com/w160/${country.flagCode.toLowerCase()}.png`}
+                    alt={`${country.name} flag`}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover scale-110"
+                    priority
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Country Info Section */}
-            <div className="flex flex-col gap-[13px] flex-grow">
-              <div className="text-white text-[25.14px] font-medium font-['Inter'] leading-snug">
-                {country.name}
-              </div>
-              <div className="text-[#70e000] text-xl font-medium font-['Inter'] leading-snug">
-                {country.countryScore}
+              {/* Country Info Section */}
+              <div className="flex flex-col gap-[8px] sm:gap-[13px]">
+                <div className="text-white text-xl sm:text-[25.14px] font-medium font-['Inter'] leading-snug">
+                  {country.name}
+                </div>
+                <div className="text-[#70e000] text-lg sm:text-xl font-medium font-['Inter'] leading-snug">
+                  {country.countryScore}
+                </div>
               </div>
             </div>
 
             {/* Stats Section */}
-            <div className="flex flex-1 justify-end gap-8">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-8 w-full sm:w-auto mt-4 sm:mt-0">
               {/* Open Trades */}
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-[#ffe5664D] rounded-[100px] flex items-center justify-center">
@@ -856,9 +870,9 @@ export default function CountryPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Chart Panel */}
-            <div className="md:col-span-2 w-full h-[520px] p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-5 overflow-hidden transition-all duration-200 hover:shadow-lg">
+            <div className="lg:col-span-2 w-full h-[300px] sm:h-[400px] lg:h-[520px] p-4 sm:p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-4 sm:gap-5 overflow-hidden transition-all duration-200 hover:shadow-lg">
               <div className="self-stretch inline-flex justify-between items-center">
                 <div className="flex-1 justify-start text-white text-lg font-medium font-['Inter'] leading-7">
                   Live Countryscore
@@ -869,129 +883,85 @@ export default function CountryPage() {
               </div>
               <div className="self-stretch flex-1 inline-flex justify-start items-start">
                 <div className="flex-1 self-stretch relative">
-                  <div className="w-full h-[424px] left-0 top-0 absolute inline-flex flex-col justify-start items-start gap-2">
-                    <div className="self-stretch flex-1 flex flex-col justify-between items-center">
-                      {[...Array(6)].map((_, i) => (
-                        <div key={i} className="self-stretch h-0 relative">
-                          <div className="w-full h-0 left-0 top-0 absolute outline outline-[0.50px] outline-offset-[-0.25px] outline-[#323232]"></div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Line Chart SVG */}
-                    <svg
-                      className="absolute inset-0 w-full h-full"
-                      preserveAspectRatio="none"
-                    >
-                      {/* Gradient definition */}
-                      <defs>
-                        <linearGradient
-                          id="greenGradient"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="0%"
-                            stopColor="#70E000"
-                            stopOpacity="0.2"
-                          />
-                          <stop
-                            offset="100%"
-                            stopColor="#70E000"
-                            stopOpacity="0"
-                          />
-                        </linearGradient>
-                      </defs>
-
-                      {/* Area under the line */}
-                      <path
-                        d="M40,280 L100,200 L160,240 L220,180 L280,220 L340,160 L400,190 L460,150 L520,180 L580,140 L640,170 L700,130 L760,150 L760,350 L40,350 Z"
-                        fill="url(#greenGradient)"
-                      />
-
-                      {/* Main line */}
-                      <path
-                        d="M40,280 L100,200 L160,240 L220,180 L280,220 L340,160 L400,190 L460,150 L520,180 L580,140 L640,170 L700,130 L760,150"
-                        stroke="#70E000"
-                        strokeWidth="2"
-                        fill="none"
-                      />
-
-                      {/* Data points */}
-                      {[
-                        [40, 280],
-                        [100, 200],
-                        [160, 240],
-                        [220, 180],
-                        [280, 220],
-                        [340, 160],
-                        [400, 190],
-                        [460, 150],
-                        [520, 180],
-                        [580, 140],
-                        [640, 170],
-                        [700, 130],
-                        [760, 150],
-                      ].map(([x, y], i) => (
-                        <circle key={i} cx={x} cy={y} r="4" fill="#70E000" />
-                      ))}
-                    </svg>
-
-                    <div className="self-stretch px-6 inline-flex justify-between items-center">
-                      {[
-                        "28 April",
-                        "29 April",
-                        "30 April",
-                        "1 May",
-                        "2 May",
-                        "3 May",
-                        "4 May",
-                        "5 May",
-                        "6 May",
-                        "7 May",
-                        "8 May",
-                        "9 May",
-                      ].map((date) => (
-                        <div
-                          key={date}
-                          className="justify-start text-[#697485] text-xs font-normal font-['Inter'] leading-[18px]"
-                        >
-                          {date}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="w-full h-[398px] px-5 left-0 top-0 absolute inline-flex justify-between items-end">
-                    {[...Array(13)].map((_, i) => (
-                      <div key={i} className="w-8 self-stretch relative">
-                        {i === 0 && (
-                          <div className="w-8 h-[420px] left-0 top-[29px] absolute" />
-                        )}
-                      </div>
+                  {/* Chart grid lines */}
+                  <div className="absolute inset-0 flex flex-col justify-between pointer-events-none z-0">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="h-0 border-t border-[#323232] opacity-70" />
                     ))}
                   </div>
-                </div>
-                <div className="w-[47px] self-stretch flex justify-between items-start">
-                  <div className="w-[398px] h-0 origin-top-left rotate-90 outline outline-1 outline-offset-[-0.50px] outline-[#323232]"></div>
-                  <div className="w-[30px] self-stretch inline-flex flex-col justify-start items-start gap-[27px]">
+                  
+                  {/* Line Chart SVG */}
+                  <svg className="absolute inset-0 w-full h-full z-10" preserveAspectRatio="none" viewBox="0 0 800 400">
+                    <defs>
+                      <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#70E000" stopOpacity="0.2" />
+                        <stop offset="100%" stopColor="#70E000" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    
+                    {/* Area under the line */}
+                    <path
+                      d="M40,280 L100,200 L160,240 L220,180 L280,220 L340,160 L400,190 L460,150 L520,180 L580,140 L640,170 L700,130 L760,150 L760,350 L40,350 Z"
+                      fill="url(#greenGradient)"
+                    />
+                    
+                    {/* Main line */}
+                    <path
+                      d="M40,280 L100,200 L160,240 L220,180 L280,220 L340,160 L400,190 L460,150 L520,180 L580,140 L640,170 L700,130 L760,150"
+                      stroke="#70E000"
+                      strokeWidth="2"
+                      fill="none"
+                    />
+                    
+                    {/* Data points - Responsive sizing */}
                     {[
-                      "2500",
-                      "2300",
-                      "2000",
-                      "1800",
-                      "1600",
-                      "1400",
-                      "1200",
-                      "1100",
-                      "900",
-                    ].map((value) => (
+                      [40, 280], [100, 200], [160, 240], [220, 180], [280, 220], [340, 160],
+                      [400, 190], [460, 150], [520, 180], [580, 140], [640, 170], [700, 130], [760, 150],
+                    ].map(([x, y], i) => (
+                      <circle 
+                        key={i} 
+                        cx={x} 
+                        cy={y} 
+                        r="2" 
+                        fill="#70E000" 
+                        className="sm:r-3 lg:r-4"
+                      />
+                    ))}
+                  </svg>
+                  
+                  {/* X-axis labels - Responsive padding */}
+                  <div className="absolute bottom-0 left-0 w-full px-2 sm:px-4 lg:px-6 flex justify-between items-center z-20">
+                    {/* X-axis labels would go here if needed */}
+                  </div>
+                </div>
+                
+                {/* Y-axis section - Fully responsive */}
+                <div className="w-6 sm:w-8 lg:w-[47px] self-stretch flex flex-col justify-between items-end pl-1 sm:pl-2 lg:pl-3 relative">
+                  {/* Vertical line - Hidden on mobile */}
+                  <div className="hidden lg:block absolute right-0 top-0 h-full w-px bg-[#323232]" />
+                  
+                  {/* Y-axis labels - Mobile optimized */}
+                  <div className="flex flex-col justify-between h-full py-1 sm:py-2 gap-1 sm:gap-0">
+                    {[
+                      "2500", "2300", "2000", "1800", "1600", 
+                      "1400", "1200", "1100", "900"
+                    ].map((value, index) => (
                       <div
                         key={value}
-                        className="self-stretch justify-start text-[#697485] text-xs font-normal font-['Inter'] leading-[18px]"
+                        className="text-[#697485] text-[10px] sm:text-xs font-normal font-['Inter'] leading-tight text-right whitespace-nowrap"
+                        style={{ 
+                          transform: `translateY(${
+                            index === 0 ? '0' : 
+                            index === 8 ? '-100%' : 
+                            '-50%'
+                          })` 
+                        }}
                       >
-                        {value}
+                        {/* Show abbreviated values on mobile */}
+                        <span className="block sm:hidden">
+                          {value.length > 4 ? `${value.slice(0, 2)}k` : value}
+                        </span>
+                        <span className="hidden sm:block">{value}</span>
                       </div>
                     ))}
                   </div>
@@ -1000,7 +970,7 @@ export default function CountryPage() {
             </div>
 
             {/* Trading Panel */}
-            <div className="self-stretch p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-6 transition-all duration-200 hover:shadow-lg">
+            <div className="self-stretch p-4 sm:p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-4 sm:gap-6 transition-all duration-200 hover:shadow-lg">
               <div className="self-stretch px-2.5 py-2 bg-[#2d2d2e] rounded-[100px] flex">
                 <div className="self-stretch h-[61px] flex-1 flex items-center relative">
                   <div
@@ -1074,49 +1044,52 @@ export default function CountryPage() {
                     </div>
                     <div className="self-stretch inline-flex justify-start items-start gap-[19px]">
                       <div className="flex-1 flex justify-start items-center gap-[12.57px]">
-                        <div className="flex-1 justify-start">
-                          <span className="text-[#666666] text-base font-medium font-['Inter'] leading-snug">
+                        <div className="flex-1 justify-start min-w-0"> {/* Add min-w-0 */}
+                          <span className="text-[#666666] text-sm sm:text-base font-medium font-['Inter'] leading-snug">
                             Balance :{" "}
                           </span>
-                          <span className="text-white text-base font-medium font-['Inter'] leading-snug">
-                            {walletBalance
-                              ? `${Number(walletBalance.formatted).toFixed(
-                                  4
-                                )} ${walletBalance.symbol}`
-                              : "Loading..."}
+                          <span className="text-white text-sm sm:text-base font-medium font-['Inter'] leading-snug break-all"> {/* Add break-all */}
+                            {!mounted
+                              ? "Loading..."
+                              : address
+                              ? walletBalance
+                                ? `${Number(walletBalance.formatted).toFixed(
+                                    4
+                                  )} ${walletBalance.symbol}`
+                                : "Loading..."
+                              : "Connect Wallet"}
                           </span>
                         </div>
                       </div>
                       <div className="flex justify-start items-center gap-[12.57px]">
-                        <div className="justify-start text-[#666666] text-base font-medium font-['Inter'] leading-snug cursor-pointer">
+                        <div className="justify-start text-[#666666] text-sm sm:text-base font-medium font-['Inter'] leading-snug cursor-pointer whitespace-nowrap"> {/* Add whitespace-nowrap */}
                           Deposit Funds
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="self-stretch h-[63px] px-[22px] py-1.5 bg-[#2d2e2e] rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] inline-flex justify-end items-center gap-1">
+                  <div className="self-stretch h-[50px] sm:h-[63px] px-3 sm:px-[22px] py-1.5 bg-[#2d2e2e] rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] inline-flex justify-end items-center gap-1">
                     <input
                       type="number"
                       value={position.size}
                       onChange={(e) =>
                         setPosition({ ...position, size: e.target.value })
                       }
+                      placeholder="0.00"
                       className={`flex-1 bg-transparent text-left outline-none border-none ${
                         position.size ? "text-white" : "text-red-500"
-                      } text-xl font-bold font-['Inter'] leading-tight`}
+                      } text-lg sm:text-xl font-bold font-['Inter'] leading-tight min-w-0`}
                     />
-                    <div className="text-[#d6d6d6] text-xl font-bold font-['Inter'] leading-tight">
+                    <div className="text-[#d6d6d6] text-lg sm:text-xl font-bold font-['Inter'] leading-tight whitespace-nowrap">
                       USDC
                     </div>
                   </div>
-                  <div className="self-stretch py-6 relative inline-flex justify-start items-center gap-3">
+                  <div className="self-stretch py-4 sm:py-6 relative inline-flex justify-start items-center gap-3">
                     <div className="flex-1 h-1 bg-[#2d2e2e] rounded-full relative">
                       <div
                         className="absolute h-full bg-gradient-to-r from-[#155dee] to-[#45b3ff] rounded-full transition-all duration-200"
                         style={{
-                          width: `${
-                            ((Number(position.leverage) - 1) / 4) * 100
-                          }%`,
+                          width: `${((Number(position.leverage) - 1) / 4) * 100}%`,
                         }}
                       />
                       <input
@@ -1137,7 +1110,7 @@ export default function CountryPage() {
                           style={{ left: `${((value - 1) / 4) * 100}%` }}
                         >
                           <div
-                            className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-200 ${
                               value <= Number(position.leverage)
                                 ? "bg-white shadow-[0_0_8px_rgba(21,93,238,0.5)]"
                                 : "bg-[#404040]"
@@ -1146,29 +1119,27 @@ export default function CountryPage() {
                         </div>
                       ))}
                       <div
-                        className="absolute -top-3 -ml-3 z-10 transition-all duration-200"
+                        className="absolute -top-2 sm:-top-3 -ml-2 sm:-ml-3 z-10 transition-all duration-200"
                         style={{
-                          left: `${
-                            ((Number(position.leverage) - 1) / 4) * 100
-                          }%`,
+                          left: `${((Number(position.leverage) - 1) / 4) * 100}%`,
                         }}
                       >
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-b from-[#155dee] to-[#45b3ff] shadow-[0_0_10px_rgba(21,93,238,0.5)] flex items-center justify-center">
-                          <div className="w-2 h-2 bg-white rounded-full" />
+                        <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-gradient-to-b from-[#155dee] to-[#45b3ff] shadow-[0_0_10px_rgba(21,93,238,0.5)] flex items-center justify-center">
+                          <div className="w-1 h-1 sm:w-2 sm:h-2 bg-white rounded-full" />
                         </div>
                       </div>
                     </div>
-                    <div className="w-12 flex justify-center items-center">
-                      <div className="text-center text-[#717171] text-xl font-medium font-['Inter'] leading-normal bg-[#2d2e2e] px-3 py-1 rounded-full">
+                    <div className="w-8 sm:w-12 flex justify-center items-center">
+                      <div className="text-center text-[#717171] text-base sm:text-xl font-medium font-['Inter'] leading-normal bg-[#2d2e2e] px-2 sm:px-3 py-1 rounded-full">
                         x{position.leverage}
                       </div>
                     </div>
                   </div>
                   <div className="self-stretch inline-flex justify-center items-center">
-                    <div className="w-56 py-4 flex justify-center items-center gap-8">
-                      <div className="w-[202px] flex justify-center items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-[100px] flex items-center justify-center">
-                          <div className="w-8 h-8 bg-[#16b2644D] rounded-[100px] flex items-center justify-center">
+                    <div className="w-full py-4 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8">
+                      <div className="w-full sm:w-[202px] flex justify-center items-center gap-3">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-[100px] flex items-center justify-center">
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-[#16b2644D] rounded-[100px] flex items-center justify-center">
                             <svg
                               width="16"
                               height="16"
@@ -1193,39 +1164,38 @@ export default function CountryPage() {
                             </svg>
                           </div>
                         </div>
-                        <div className="w-[181px] inline-flex flex-col justify-start items-start">
-                          <div className="self-stretch justify-start text-[#697485] text-sm font-normal font-['Inter'] leading-tight">
+                        <div className="flex-1 sm:w-[181px] inline-flex flex-col justify-start items-start">
+                          <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-normal font-['Inter'] leading-tight">
                             Size - Entry Price
                           </div>
-                          <div className="self-stretch justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
-                            ${Number(position.size) * Number(position.leverage)}{" "}
-                            at {country.markPrice}
+                          <div className="self-stretch justify-start text-white text-xs sm:text-sm font-medium font-['Inter'] leading-tight break-all">
+                            ${Number(position.size) * Number(position.leverage)} at {country.markPrice}
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="w-[132px] py-4 flex justify-start items-center gap-8">
-                      <div className="flex-1 flex justify-start items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-[100px] flex items-center justify-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="w-5 h-5"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M3.75 12a.75.75 0 01.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                        <div className="flex-1 inline-flex flex-col justify-start items-start">
-                          <div className="self-stretch justify-start text-[#697485] text-sm font-normal font-['Inter'] leading-tight">
-                            Liquidated at
+                      <div className="w-full sm:w-[132px] py-4 flex justify-start items-center gap-8">
+                        <div className="flex-1 flex justify-start items-center gap-3">
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-[100px] flex items-center justify-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              className="w-5 h-5"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M3.75 12a.75.75 0 01.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
                           </div>
-                          <div className="self-stretch justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
-                            {country.liquidationPrice}
+                          <div className="flex-1 inline-flex flex-col justify-start items-start">
+                            <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-normal font-['Inter'] leading-tight">
+                              Liquidated at
+                            </div>
+                            <div className="self-stretch justify-start text-white text-xs sm:text-sm font-medium font-['Inter'] leading-tight">
+                              {country.liquidationPrice}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1248,447 +1218,500 @@ export default function CountryPage() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Panels */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-          {/* About Panel */}
-          <div className="self-stretch p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-5 transition-all duration-200 hover:shadow-lg">
-            <div className="self-stretch inline-flex justify-start items-center gap-4">
-              <div className="flex-1 justify-start text-white text-lg font-medium font-['Inter'] leading-7">
-                About
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-6 h-6 text-[#99a3b2]"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M12 6a2 2 0 11-4 0 2 2 0 014 0zM12 12a2 2 0 11-4 0 2 2 0 014 0zM12 18a2 2 0 11-4 0 2 2 0 014 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="self-stretch inline-flex justify-start items-center gap-4">
-              <div className="flex-1 justify-start text-[#676767] text-lg font-medium font-['Inter'] leading-7">
-                {country.description}
-              </div>
-            </div>
-          </div>
-
-          {/* Leaderboard Panel */}
-          <div className="self-stretch h-[407px] p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-5 transition-all duration-200 hover:shadow-lg">
-            <div className="self-stretch inline-flex justify-start items-center gap-4">
-              <div className="flex-1 justify-start text-white text-lg font-medium font-['Inter'] leading-7">
-                Leaderboard
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-6 h-6 text-[#99a3b2]"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M12 6a2 2 0 11-4 0 2 2 0 014 0zM12 12a2 2 0 11-4 0 2 2 0 014 0zM12 18a2 2 0 11-4 0 2 2 0 014 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="self-stretch inline-flex justify-start items-center gap-4">
-              <div className="flex-1 justify-start text-[#676767] text-lg font-medium font-['Inter'] leading-7">
-                You are ranked 167th in Indonesia
-              </div>
-            </div>
-            <div className="self-stretch flex-1 flex flex-col justify-start items-start">
-              <div className="self-stretch h-px relative">
-                <div className="w-[399px] h-px left-0 top-0 absolute bg-[#323232]" />
-              </div>
-              <div className="self-stretch py-4 inline-flex justify-between items-center">
-                <div className="w-[244px] flex justify-between items-center">
-                  <div className="justify-start text-[#697485] text-sm font-normal font-['Inter'] leading-tight">
-                    Rank #1
-                  </div>
-                  <div className="flex justify-start items-center gap-3">
-                    <Image
-                      className="w-[33px] h-8 rounded-[100px]"
-                      src="/sarah.jpg"
-                      alt="Profile 1"
-                      width={33}
-                      height={32}
-                    />
-                    <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
-                      0xMeiline
-                    </div>
-                  </div>
+          {/* Bottom Panels */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">
+            {/* About Panel */}
+            <div className="self-stretch p-4 sm:p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-4 sm:gap-5 transition-all duration-200 hover:shadow-lg">
+              <div className="self-stretch inline-flex justify-start items-center gap-4">
+                <div className="flex-1 justify-start text-white text-lg font-medium font-['Inter'] leading-7">
+                  About
                 </div>
-                <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">
-                  $250,000
-                </div>
-              </div>
-              <div className="self-stretch h-px bg-[#323232]" />
-              <div className="self-stretch py-4 inline-flex justify-between items-center">
-                <div className="w-[231px] flex justify-between items-center">
-                  <div className="justify-start text-[#697485] text-sm font-normal font-['Inter'] leading-tight">
-                    Rank #2
-                  </div>
-                  <div className="flex justify-start items-center gap-3">
-                    <Image
-                      className="w-[33px] h-8 rounded-[100px]"
-                      src="/john.jpg"
-                      alt="Profile 2"
-                      width={33}
-                      height={32}
-                    />
-                    <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
-                      0xClara
-                    </div>
-                  </div>
-                </div>
-                <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">
-                  $12,000
-                </div>
-              </div>
-              <div className="self-stretch h-px relative">
-                <div className="w-[399px] h-px left-0 top-0 absolute bg-[#323232]" />
-              </div>
-              <div className="self-stretch py-4 inline-flex justify-between items-center">
-                <div className="w-[247px] flex justify-between items-center">
-                  <div className="justify-start text-[#697485] text-sm font-normal font-['Inter'] leading-tight">
-                    Rank #3
-                  </div>
-                  <div className="flex justify-start items-center gap-3">
-                    <Image
-                      className="w-[33px] h-8 rounded-[100px]"
-                      src="/david.jpg"
-                      alt="Profile 3"
-                      width={33}
-                      height={32}
-                    />
-                    <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
-                      0xEdward
-                    </div>
-                  </div>
-                </div>
-                <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">
-                  $10,000
-                </div>
-              </div>
-              <div className="self-stretch h-px relative">
-                <div className="w-[399px] h-px left-0 top-0 absolute bg-[#323232]" />
-              </div>
-              <div className="self-stretch py-4 inline-flex justify-between items-center">
-                <div className="w-60 flex justify-between items-center">
-                  <div className="justify-start text-white text-sm font-semibold font-['Inter'] leading-tight">
-                    Rank #167
-                  </div>
-                  <div className="flex justify-start items-center gap-3">
-                    <Image
-                      className="w-[33px] h-8 rounded-[100px]"
-                      src="/placeholder-user.jpg"
-                      alt="Profile 4"
-                      width={33}
-                      height={32}
-                    />
-                    <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
-                      0xCeline
-                    </div>
-                  </div>
-                </div>
-                <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">
-                  $1,000
-                </div>
-              </div>
-              <div className="self-stretch h-px relative" />
-              <div className="self-stretch h-px relative" />
-            </div>
-          </div>
-
-          {/* Positions Panel */}
-          <div
-            id="positions-panel"
-            className="self-stretch p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-5"
-          >
-            <div className="self-stretch inline-flex justify-start items-center gap-4">
-              <div className="flex-1 justify-start text-white text-lg font-medium font-['Inter'] leading-7">
-                Positions
-              </div>
-              {showPosition && closeStep === null && (
-                <div
-                  className="w-[116px] h-10 px-[10.75px] py-1 rounded-[67.21px] shadow-[0px_0.6720554232597351px_1.3441108465194702px_0px_rgba(0,0,0,0.12)] outline outline-1 outline-offset-[-1px] outline-[#155dee] flex justify-center items-center gap-[2.69px] cursor-pointer"
-                  onClick={() => setCloseStep(1)}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-6 h-6 text-[#99a3b2]"
                 >
-                  <div className="text-center justify-center text-[#155dee] text-base font-semibold font-['Inter'] leading-none">
-                    Close
-                  </div>
+                  <path
+                    fillRule="evenodd"
+                    d="M12 6a2 2 0 11-4 0 2 2 0 014 0zM12 12a2 2 0 11-4 0 2 2 0 014 0zM12 18a2 2 0 11-4 0 2 2 0 014 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="self-stretch inline-flex justify-start items-center gap-4">
+                <div className="flex-1 justify-start text-[#676767] text-lg font-medium font-['Inter'] leading-7">
+                  {country.description}
                 </div>
-              )}
+              </div>
             </div>
-            {showPosition && closeStep === null ? (
+
+            {/* Leaderboard Panel */}
+            <div className="self-stretch h-[380px] sm:h-[407px] p-4 sm:p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-4 sm:gap-5 transition-all duration-200 hover:shadow-lg">
+              <div className="self-stretch inline-flex justify-start items-center gap-4">
+                <div className="flex-1 justify-start text-white text-lg font-medium font-['Inter'] leading-7">
+                  Leaderboard
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-6 h-6 text-[#99a3b2]"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M12 6a2 2 0 11-4 0 2 2 0 014 0zM12 12a2 2 0 11-4 0 2 2 0 014 0zM12 18a2 2 0 11-4 0 2 2 0 014 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="self-stretch inline-flex justify-start items-center gap-4">
+                <div className="flex-1 justify-start text-[#676767] text-lg font-medium font-['Inter'] leading-7">
+                  You are ranked 167th in Indonesia
+                </div>
+              </div>
               <div className="self-stretch flex-1 flex flex-col justify-start items-start">
                 <div className="self-stretch h-px relative">
-                  <div className="w-[449px] h-px left-0 top-0 absolute bg-[#323232]" />
+                  <div className="w-[399px] h-px left-0 top-0 absolute bg-[#323232]" />
                 </div>
                 <div className="self-stretch py-4 inline-flex justify-between items-center">
-                  <div className="w-[71px] flex justify-between items-center">
-                    <div className="w-4 h-[15px] bg-[#155dee] rounded-[100px]" />
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
-                      {country.name}
+                  <div className="w-[244px] flex justify-between items-center">
+                    <div className="justify-start text-[#697485] text-sm font-normal font-['Inter'] leading-tight">
+                      Rank #1
                     </div>
-                  </div>
-                  <div className="justify-start text-[#b21616] text-sm font-normal font-['Inter'] leading-tight">
-                    -$0.24 (-0.0%)
-                  </div>
-                </div>
-                <div className="self-stretch py-3.5 inline-flex justify-between items-center">
-                  <div className="w-[101px] flex justify-between items-center">
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
-                      Position Size
-                    </div>
-                  </div>
-                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">
-                    ${position.size}
-                  </div>
-                </div>
-                <div className="self-stretch py-3.5 inline-flex justify-between items-center">
-                  <div className="w-[101px] flex justify-between items-center">
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
-                      Entry Price
-                    </div>
-                  </div>
-                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">
-                    {country.markPrice}
-                  </div>
-                </div>
-                <div className="self-stretch py-3.5 inline-flex justify-between items-center">
-                  <div className="w-[101px] flex justify-between items-center">
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
-                      Liquidation Price
-                    </div>
-                  </div>
-                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">
-                    {country.liquidationPrice}
-                  </div>
-                </div>
-                <div className="self-stretch py-3.5 inline-flex justify-between items-center">
-                  <div className="w-[101px] flex justify-between items-center">
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
-                      Fees
-                    </div>
-                  </div>
-                  <div className="justify-start text-[#697586] text-sm font-normal font-['Inter'] leading-tight">
-                    $2.50
-                  </div>
-                </div>
-                <div className="self-stretch h-px relative">
-                  <div className="w-[449px] h-px left-0 top-0 absolute bg-[#323232]" />
-                </div>
-                <div className="self-stretch py-4 inline-flex justify-between items-center">
-                  <div className="w-[101px] flex justify-between items-center">
-                    <div className="w-4 h-[15px] bg-[#155dee] rounded-[100px]" />
-                    <div className="justify-start text-[#697485] text-sm font-medium font-['Inter'] leading-tight">
-                      Abstract
+                    <div className="flex justify-start items-center gap-3">
+                      <Image
+                        className="w-[33px] h-8 rounded-[100px]"
+                        src="/sarah.jpg"
+                        alt="Profile 1"
+                        width={33}
+                        height={32}
+                      />
+                      <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
+                        0xMeiline
+                      </div>
                     </div>
                   </div>
                   <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">
-                    $0.24 (+0.5%)
+                    $250,000
                   </div>
                 </div>
-              </div>
-            ) : closeStep ? (
-              <div className="self-stretch flex-1">
-                {/* Progress Steps */}
-                <div className="flex justify-between items-center mb-8">
-                  {[1, 2, 3, 4].map((number) => (
-                    <div key={number} className="flex items-center">
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                          closeStep === number
-                            ? "bg-[#155dee] text-white"
-                            : closeStep > number
-                            ? "bg-[#155dee] text-white"
-                            : "bg-[#2d2d2e] text-gray-400"
-                        }`}
-                      >
-                        {number}
+                <div className="self-stretch h-px bg-[#323232]" />
+                <div className="self-stretch py-4 inline-flex justify-between items-center">
+                  <div className="w-[231px] flex justify-between items-center">
+                    <div className="justify-start text-[#697485] text-sm font-normal font-['Inter'] leading-tight">
+                      Rank #2
+                    </div>
+                    <div className="flex justify-start items-center gap-3">
+                      <Image
+                        className="w-[33px] h-8 rounded-[100px]"
+                        src="/john.jpg"
+                        alt="Profile 2"
+                        width={33}
+                        height={32}
+                      />
+                      <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
+                        0xClara
                       </div>
-                      {number < 4 && (
-                        <div
-                          className={`h-0.5 flex-1 ${
-                            closeStep > number ? "bg-[#155dee]" : "bg-[#2d2d2e]"
-                          }`}
-                        />
+                    </div>
+                  </div>
+                  <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">
+                    $12,000
+                  </div>
+                </div>
+                <div className="self-stretch h-px relative">
+                  <div className="w-[399px] h-px left-0 top-0 absolute bg-[#323232]" />
+                </div>
+                <div className="self-stretch py-4 inline-flex justify-between items-center">
+                  <div className="w-[247px] flex justify-between items-center">
+                    <div className="justify-start text-[#697485] text-sm font-normal font-['Inter'] leading-tight">
+                      Rank #3
+                    </div>
+                    <div className="flex justify-start items-center gap-3">
+                      <Image
+                        className="w-[33px] h-8 rounded-[100px]"
+                        src="/david.jpg"
+                        alt="Profile 3"
+                        width={33}
+                        height={32}
+                      />
+                      <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
+                        0xEdward
+                      </div>
+                    </div>
+                  </div>
+                  <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">
+                    $10,000
+                  </div>
+                </div>
+                <div className="self-stretch h-px relative">
+                  <div className="w-[399px] h-px left-0 top-0 absolute bg-[#323232]" />
+                </div>
+                <div className="self-stretch py-4 inline-flex justify-between items-center">
+                  <div className="w-60 flex justify-between items-center">
+                    <div className="justify-start text-white text-sm font-semibold font-['Inter'] leading-tight">
+                      Rank #167
+                    </div>
+                    <div className="flex justify-start items-center gap-3">
+                      <Image
+                        className="w-[33px] h-8 rounded-[100px]"
+                        src="/placeholder-user.jpg"
+                        alt="Profile 4"
+                        width={33}
+                        height={32}
+                      />
+                      <div className="justify-start text-white text-sm font-medium font-['Inter'] leading-tight">
+                        0xCeline
+                      </div>
+                    </div>
+                  </div>
+                  <div className="justify-start text-[#16b264] text-sm font-normal font-['Inter'] leading-tight">
+                    $1,000
+                  </div>
+                </div>
+                <div className="self-stretch h-px relative" />
+                <div className="self-stretch h-px relative" />
+              </div>
+            </div>
+
+            {/* Positions Panel */}
+            <div id="positions-panel" className="self-stretch p-4 sm:p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] flex flex-col justify-start items-start gap-4 sm:gap-5 min-h-[300px] sm:min-h-[400px]">
+              <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+                <div className="text-white text-lg font-medium font-['Inter'] leading-7">
+                  Positions
+                </div>
+                {showPosition && closeStep === null && (
+                  <button
+                    className="w-full sm:w-auto px-4 py-2 rounded-full bg-[#155dee] hover:bg-[#0d4bc4] transition-colors duration-200 flex justify-center items-center gap-2 cursor-pointer"
+                    onClick={() => setCloseStep(1)}
+                  >
+                    <span className="text-white text-sm sm:text-base font-semibold">
+                      Close Position
+                    </span>
+                  </button>
+                )}
+              </div>
+              
+              <div className="w-full flex-1">
+                {showPosition && closeStep === null ? (
+                  <div className="w-full flex flex-col justify-start items-start space-y-3">
+                    <div className="w-full h-px bg-[#323232]" />
+                    
+                    {/* Position Header */}
+                    <div className="w-full py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 bg-[#155dee] rounded-full" />
+                        <span className="text-[#697485] text-sm font-medium">
+                          {country.name}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          position.isLong 
+                            ? 'bg-[#16b264] bg-opacity-20 text-[#16b264]' 
+                            : 'bg-[#ff4545] bg-opacity-20 text-[#ff4545]'
+                        }`}>
+                          {position.isLong ? 'LONG' : 'SHORT'}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[#b21616] text-sm font-normal">
+                          -$0.24 (-0.0%)
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Position Details */}
+                    <div className="w-full space-y-3">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b border-[#323232] border-opacity-50">
+                        <span className="text-[#697485] text-sm font-medium mb-1 sm:mb-0">
+                          Position Size
+                        </span>
+                        <span className="text-[#697586] text-sm font-normal">
+                          ${position.size}
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b border-[#323232] border-opacity-50">
+                        <span className="text-[#697485] text-sm font-medium mb-1 sm:mb-0">
+                          Entry Price
+                        </span>
+                        <span className="text-[#697586] text-sm font-normal">
+                          {country.markPrice}
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b border-[#323232] border-opacity-50">
+                        <span className="text-[#697485] text-sm font-medium mb-1 sm:mb-0">
+                          Liquidation Price
+                        </span>
+                        <span className="text-[#697586] text-sm font-normal">
+                          {country.liquidationPrice}
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b border-[#323232] border-opacity-50">
+                        <span className="text-[#697485] text-sm font-medium mb-1 sm:mb-0">
+                          Fees
+                        </span>
+                        <span className="text-[#697586] text-sm font-normal">
+                          $2.50
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="w-full h-px bg-[#323232] my-4" />
+                    
+                    {/* Additional Position */}
+                    <div className="w-full py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 bg-[#155dee] rounded-full" />
+                        <span className="text-[#697485] text-sm font-medium">
+                          Abstract
+                        </span>
+                      </div>
+                      <div className="text-[#16b264] text-sm font-normal">
+                        $0.24 (+0.5%)
+                      </div>
+                    </div>
+                  </div>
+                ) : closeStep ? (
+                  <div className="w-full flex-1 px-2 sm:px-4">
+                    {/* Progress Steps */}
+                    <div className="flex justify-between items-center mb-6 sm:mb-8">
+                      {[1, 2, 3, 4].map((number) => (
+                        <div key={number} className="flex items-center flex-1">
+                          <div
+                            className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
+                              closeStep === number
+                                ? "bg-[#155dee] text-white"
+                                : closeStep > number
+                                ? "bg-[#155dee] text-white"
+                                : "bg-[#2d2d2e] text-gray-400"
+                            }`}
+                          >
+                            {number}
+                                                   </div>
+                          {number < 4 && (
+                            <div
+                              className={`h-0.5 flex-1 mx-1 sm:mx-2 ${
+                                closeStep > number ? "bg-[#155dee]" : "bg-[#2d2d2e]"
+                              }`}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Step Content */}
+                    <div className="mb-6 space-y-4">
+                      {closeStep === 1 && (
+                        <>
+                          <div className="text-center mb-6">
+                            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">
+                              Close Position
+                            </h2>
+                            <p className="text-gray-400 text-sm">
+                              Are you sure you want to close this position?
+                            </p>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                              <span className="text-gray-400 text-sm">Position</span>
+                              <span className="text-white text-sm font-medium">
+                                {country.name} {position.isLong ? "LONG" : "SHORT"}
+                              </span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                              <span className="text-gray-400 text-sm">Size</span>
+                              <span className="text-white text-sm font-medium">${position.size}</span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                              <span className="text-gray-400 text-sm">Entry Price</span>
+                              <span className="text-white text-sm font-medium">
+                                {country.markPrice}
+                              </span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                              <span className="text-gray-400 text-sm">Mark Price</span>
+                              <span className="text-white text-sm font-medium">
+                                {country.markPrice}
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {closeStep === 2 && (
+                        <>
+                          <div className="text-center mb-6">
+                            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">
+                              Confirm PnL
+                            </h2>
+                            <p className="text-gray-400 text-sm">
+                              Review your position&apos;s performance
+                            </p>
+                          </div>
+                          <div className="text-center mb-6">
+                            <div className="text-[#16b264] text-xl sm:text-2xl font-bold">
+                              +$0.00
+                            </div>
+                            <div className="text-[#16b264]">(+0.0%)</div>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                              <span className="text-gray-400 text-sm">Trading Fees</span>
+                              <span className="text-white text-sm">-$0.00</span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                              <span className="text-gray-400 text-sm">Net PnL</span>
+                              <span className="text-[#16b264] text-sm">+$0.00</span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {closeStep === 3 && (
+                        <>
+                          <div className="text-center mb-6">
+                            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">
+                              Updated Balance
+                            </h2>
+                            <p className="text-gray-400 text-sm">
+                              Your new balance after closing position
+                            </p>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-white text-2xl sm:text-3xl font-bold mb-2">
+                              $1,234.56
+                            </div>
+                            <div className="text-gray-400 text-sm">Previous: $1,000.00</div>
+                          </div>
+                        </>
+                      )}
+
+                      {closeStep === 4 && (
+                        <>
+                          <div className="text-center mb-6">
+                            <h2 className="text-white text-lg sm:text-xl font-semibold mb-2">
+                              Trade History
+                            </h2>
+                            <p className="text-gray-400 text-sm">
+                              Position successfully closed
+                            </p>
+                          </div>
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <div>
+                              <div className="text-white text-sm font-medium">
+                                {country.name} {position.isLong ? "LONG" : "SHORT"}
+                              </div>
+                              <div className="text-gray-400 text-xs">
+                                Closed at {new Date().toLocaleTimeString()}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[#16b264] text-sm font-medium">+$0.00</div>
+                              <div className="text-gray-400 text-xs">0.0%</div>
+                            </div>
+                          </div>
+                        </>
                       )}
                     </div>
-                  ))}
-                </div>
 
-                {/* Step Content */}
-                <div className="mb-6">
-                  {closeStep === 1 && (
-                    <>
-                      <div className="text-center mb-6">
-                        <h2 className="text-white text-xl font-semibold mb-2">
-                          Close Position
-                        </h2>
-                        <p className="text-gray-400 text-sm">
-                          Are you sure you want to close this position?
-                        </p>
+                    {/* Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6">
+                      {closeStep === 1 && (
+                        <>
+                          <button
+                            onClick={() => setCloseStep(null)}
+                            className="w-full py-3 rounded-full bg-[#2d2d2e] text-white hover:bg-[#3d3d3e] transition-colors duration-200"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleCloseStepContinue}
+                            className="w-full py-3 rounded-full bg-[#155dee] text-white hover:bg-[#0d4bc4] transition-colors duration-200"
+                          >
+                            Close Position
+                          </button>
+                        </>
+                      )}
+                      {closeStep === 2 && (
+                        <button
+                          onClick={handleCloseStepContinue}
+                          className="w-full py-3 rounded-full bg-[#155dee] text-white hover:bg-[#0d4bc4] transition-colors duration-200"
+                        >
+                          Continue
+                        </button>
+                      )}
+                      {closeStep === 3 && (
+                        <button
+                          onClick={handleCloseStepContinue}
+                          className="w-full py-3 rounded-full bg-[#155dee] text-white hover:bg-[#0d4bc4] transition-colors duration-200"
+                        >
+                          View History
+                        </button>
+                      )}
+                      {closeStep === 4 && (
+                        <button
+                          onClick={handleCloseStepContinue}
+                          className="w-full py-3 rounded-full bg-[#155dee] text-white hover:bg-[#0d4bc4] transition-colors duration-200"
+                        >
+                          View History
+                        </button>
+                      )}
+                      {closeStep === 99 && (
+                        <button
+                          onClick={handleCloseStepContinue}
+                          className="w-full py-3 rounded-full bg-[#155dee] text-white hover:bg-[#0d4bc4] transition-colors duration-200"
+                        >
+                          Done
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : closeStep === 99 ? (
+                  <div className="w-full overflow-x-auto">
+                    <div className="w-full flex flex-col gap-4">
+                      {/* Header */}
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-white text-lg font-medium">Trade History</h3>
+                        <button
+                          onClick={() => setCloseStep(null)}
+                          className="text-gray-400 hover:text-white transition-colors"
+                        >
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
                       </div>
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Position</span>
-                          <span className="text-white">
-                            {country.name} {position.isLong ? "LONG" : "SHORT"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Size</span>
-                          <span className="text-white">${position.size}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Entry Price</span>
-                          <span className="text-white">
-                            {country.markPrice}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Mark Price</span>
-                          <span className="text-white">
-                            {country.markPrice}
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {closeStep === 2 && (
-                    <>
-                      <div className="text-center mb-6">
-                        <h2 className="text-white text-xl font-semibold mb-2">
-                          Confirm PnL
-                        </h2>
-                        <p className="text-gray-400 text-sm">
-                          Review your position&apos;s performance
-                        </p>
-                      </div>
-                      <div className="text-center mb-6">
-                        <div className="text-[#16b264] text-2xl font-bold">
-                          +$0.00
-                        </div>
-                        <div className="text-[#16b264]">(+0.0%)</div>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Trading Fees</span>
-                          <span className="text-white">-$0.00</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Net PnL</span>
-                          <span className="text-[#16b264]">+$0.00</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {closeStep === 3 && (
-                    <>
-                      <div className="text-center mb-6">
-                        <h2 className="text-white text-xl font-semibold mb-2">
-                          Updated Balance
-                        </h2>
-                        <p className="text-gray-400 text-sm">
-                          Your new balance after closing position
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-white text-3xl font-bold mb-2">
-                          $1,234.56
-                        </div>
-                        <div className="text-gray-400">Previous: $1,000.00</div>
-                      </div>
-                    </>
-                  )}
-
-                  {closeStep === 4 && (
-                    <>
-                      <div className="text-center mb-6">
-                        <h2 className="text-white text-xl font-semibold mb-2">
-                          Trade History
-                        </h2>
-                        <p className="text-gray-400 text-sm">
-                          Position successfully closed
-                        </p>
-                      </div>
-                      <div className="flex justify-between">
-                        <div>
-                          <div className="text-white">
-                            {country.name} {position.isLong ? "LONG" : "SHORT"}
-                          </div>
-                          <div className="text-gray-400 text-sm">
-                            Closed at {new Date().toLocaleTimeString()}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-[#16b264]">+$0.00</div>
-                          <div className="text-gray-400 text-sm">0.0%</div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Buttons */}
-                <div className="flex gap-4">
-                  {closeStep === 1 && (
-                    <>
-                      <button
-                        onClick={() => setCloseStep(null)}
-                        className="flex-1 py-3 rounded-full bg-[#2d2d2e] text-white"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleCloseStepContinue}
-                        className="flex-1 py-3 rounded-full bg-[#155dee] text-white"
-                      >
-                        Continue
-                      </button>
-                    </>
-                  )}
-                  {closeStep === 2 && (
-                    <button
-                      onClick={handleCloseStepContinue}
-                      className="w-full py-3 rounded-full bg-[#155dee] text-white"
+                      
+                      {/* History Table */}
+                      <HistoryTable />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+                    <svg
+                      className="w-12 h-12 sm:w-16 sm:h-16 text-gray-600 mb-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      Continue
-                    </button>
-                  )}
-                  {closeStep === 3 && (
-                    <button
-                      onClick={handleCloseStepContinue}
-                      className="w-full py-3 rounded-full bg-[#155dee] text-white"
-                    >
-                      View History
-                    </button>
-                  )}
-                  {closeStep === 4 && (
-                    <button
-                      onClick={handleCloseStepContinue}
-                      className="w-full py-3 rounded-full bg-[#155dee] text-white"
-                    >
-                      Done
-                    </button>
-                  )}
-                </div>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
+                    </svg>
+                    <p className="text-gray-500 text-sm sm:text-base">No open positions</p>
+                    <p className="text-gray-600 text-xs sm:text-sm mt-1">
+                      Place a trade to see your positions here
+                    </p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-center text-gray-500 py-4">
-                No open positions
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
