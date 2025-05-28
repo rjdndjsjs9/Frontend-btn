@@ -321,7 +321,7 @@ export default function RootPage() {
               onClick={() => router.push("/dashboard")}
               className="justify-center text-white text-base sm:text-lg md:text-xl lg:text-2xl font-medium font-['Inter'] leading-loose px-4 sm:px-6 lg:px-[28px] py-3 md:py-[12px] bg-gradient-to-br from-[#111214] to-[#22242a] rounded-[100px] shadow-[-12px_-12px_24px_0px_rgba(21,94,239,0.24)] shadow-[12px_12px_24px_0px_rgba(255,175,41,0.24)] outline outline-[2px] outline-[#155dee] inline-flex justify-center items-center gap-[13px] overflow-hidden w-full max-w-xs sm:max-w-sm md:max-w-none md:w-auto"
             >
-              Sign Up Now and Start Trading!
+              Sign Up Now!
             </button>
           </div>
         </div>
@@ -334,10 +334,10 @@ export default function RootPage() {
             {/* Brand section */}
             <div className="col-span-2 md:col-span-4">
               <h3 className="text-lg md:text-xl font-bold text-white mb-4">
-                Betezen.Fun
+                BeTheNation.Fun
               </h3>
               <p className="text-gray-400 text-xs md:text-sm max-w-xs">
-                Betezen.Fun lets users trade GDP-based derivatives on
+                BeTheNation.Fun lets users trade GDP-based derivatives on
                 the world&apos;s leading economies, with this proof-of-concept
                 demo.
               </p>
@@ -392,7 +392,7 @@ export default function RootPage() {
           {/* Copyright section */}
           <div className="mt-8 md:mt-12 pt-6 border-t border-gray-800/30 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-xs md:text-sm">
-              Betezen.Fun © 2025
+              BeTheNation.Fun © 2025
             </p>
             <p className="text-gray-500 text-xs md:text-sm mt-2 md:mt-0">
               All Rights Reserved
