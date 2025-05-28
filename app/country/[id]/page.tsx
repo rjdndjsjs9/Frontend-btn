@@ -972,7 +972,7 @@ export default function CountryPage() {
             {/* Trading Panel */}
             <div className="self-stretch p-4 sm:p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-4 sm:gap-6 transition-all duration-200 hover:shadow-lg">
               <div className="self-stretch px-2.5 py-2 bg-[#2d2d2e] rounded-[100px] flex">
-                <div className="self-stretch h-[61px] flex-1 flex items-center relative">
+                <div className="self-stretch h-[40px] sm:h-[45px] flex-1 flex items-center relative"> {/* Made even smaller for mobile */}
                   <div
                     className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${
                       position.isLong ? "justify-start" : "justify-end"
@@ -985,17 +985,15 @@ export default function CountryPage() {
                     />
                   </div>
                   <div
-                    className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
-                      position.isLong ? "text-white" : "text-[#545454]"
-                    }`}
+                    className={`flex-1 z-10 px-[8px] sm:px-[12px] py-[6px] sm:py-[10px] flex justify-center items-center gap-[8px] sm:gap-[12px] cursor-pointer transition-colors duration-300`} /* Even smaller padding for mobile */
                     onClick={() => setPosition({ ...position, isLong: true })}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-1.5"> {/* Smaller gap for mobile */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="w-6 h-6"
+                        className="w-4 h-4 sm:w-5 sm:h-5" /* Even smaller icon for mobile */
                       >
                         <path
                           fillRule="evenodd"
@@ -1003,23 +1001,21 @@ export default function CountryPage() {
                           clipRule="evenodd"
                         />
                       </svg>
-                      <span className="text-xl font-medium font-['Inter'] leading-snug">
-                        Long
-                      </span>
+                      <span className="text-base sm:text-lg font-medium font-['Inter'] leading-snug">Long</span> {/* Smaller text for mobile */}
                     </div>
                   </div>
                   <div
-                    className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
+                    className={`flex-1 z-10 px-[8px] sm:px-[12px] py-[6px] sm:py-[10px] flex justify-center items-center gap-[8px] sm:gap-[12px] cursor-pointer transition-colors duration-300 ${
                       position.isLong ? "text-white" : "text-[#545454]"
                     }`}
                     onClick={() => setPosition({ ...position, isLong: false })}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2"> {/* Smaller gap for mobile */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="w-6 h-6"
+                        className="w-4 h-4 sm:w-6 sm:h-6" /* Smaller icon for mobile */
                       >
                         <path
                           fillRule="evenodd"
@@ -1027,7 +1023,7 @@ export default function CountryPage() {
                           clipRule="evenodd"
                         />
                       </svg>
-                      <span className="text-xl font-medium font-['Inter'] leading-snug">
+                      <span className="text-base sm:text-xl font-medium font-['Inter'] leading-snug">
                         Short
                       </span>
                     </div>
@@ -1165,7 +1161,7 @@ export default function CountryPage() {
                           </div>
                         </div>
                         <div className="flex-1 sm:w-[181px] inline-flex flex-col justify-start items-start">
-                          <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-normal font-['Inter'] leading-tight">
+                          <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-medium font-['Inter'] leading-tight">
                             Size - Entry Price
                           </div>
                           <div className="self-stretch justify-start text-white text-xs sm:text-sm font-medium font-['Inter'] leading-tight break-all">
@@ -1190,7 +1186,7 @@ export default function CountryPage() {
                             </svg>
                           </div>
                           <div className="flex-1 inline-flex flex-col justify-start items-start">
-                            <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-normal font-['Inter'] leading-tight">
+                            <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-medium font-['Inter'] leading-tight">
                               Liquidated at
                             </div>
                             <div className="self-stretch justify-start text-white text-xs sm:text-sm font-medium font-['Inter'] leading-tight">
@@ -1490,7 +1486,7 @@ export default function CountryPage() {
                             }`}
                           >
                             {number}
-                                                   </div>
+                          </div>
                           {number < 4 && (
                             <div
                               className={`h-0.5 flex-1 mx-1 sm:mx-2 ${
@@ -1701,7 +1697,7 @@ export default function CountryPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={1.5}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2v-14a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                       />
                     </svg>
                     <p className="text-gray-500 text-sm sm:text-base">No open positions</p>
