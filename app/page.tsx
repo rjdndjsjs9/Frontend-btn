@@ -179,9 +179,9 @@ export default function RootPage() {
                 <div className="bg-[#1d1f22] rounded-2xl shadow outline outline-1 outline-[#202327] p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-white text-base md:text-lg font-medium">Leaderboard</span>
-                    <span className="w-6 h-6 relative overflow-hidden">
-                      <span className="w-0.5 h-4 left-[11px] top-[4px] absolute outline outline-2 outline-offset-[-1px] outline-[#99a3b2]" />
-                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-[#99a3b2]">
+                      <path fillRule="evenodd" d="M12 6a2 2 0 11-4 0 2 2 0 014 0zM12 12a2 2 0 11-4 0 2 2 0 014 0zM12 18a2 2 0 11-4 0 2 2 0 014 0z" clipRule="evenodd"></path>
+                    </svg>
                   </div>
                   <div className="text-[#676767] text-sm mb-2">You are ranked 167th in Indonesia</div>
                   <div className="divide-y divide-[#323232]">
