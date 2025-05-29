@@ -22,8 +22,8 @@ export default function Navbar() {
             className="text-xl font-medium text-white flex items-center"
           >
             <svg
-              width="58"
-              height="58"
+              width="40"
+              height="40"
               viewBox="0 0 58 58"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +73,7 @@ export default function Navbar() {
             
             {/* Dropdown menu */}
             {isDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 bg-[#1a1b1c] border border-gray-700 rounded-lg shadow-lg z-50 min-w-[200px]">
+              <div className="absolute right-0 top-full mt-2 bg-[#1a1b1c] border border-gray-700 rounded-lg shadow-lg z-50 min-w-[150px]">
                 <div className="py-2 px-1 space-y-2">
                   <div className="px-3 py-2">
                     <ConnectWalletButton />
