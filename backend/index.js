@@ -27,9 +27,7 @@ const ctx = 'app-listen';
 
 mongoose.connect(mongoUri)
   .then(() => {
-    logger.log(ctx, "Connected to MongoDB", 'initate db');
-
-    const server = app.listen(process.env.PORT, () => {
+    logger.log(ctx, "Connected to MongoDB", 'initate db');    const server = app.listen(port, () => {
       logger.log(ctx, `Server running on port ${port}`, 'initate application');
     });
 
