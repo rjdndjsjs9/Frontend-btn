@@ -1,116 +1,186 @@
-const CountryMetric = require('../models/CountryMetric');
 const FinalScore = require('../models/FinalScore');
-const Country = require('../models/Country');
 const logger = require('../../bin/helper/logger');
-const ctx = 'country-metric-service';
 
-async function generateMockMetrics() {
+const COUNTRY_DATA = {
+    'ID': {
+        name: 'Indonesia',
+        flag: 'https://flagcdn.com/id.svg',
+        baseVolume: 1200000,
+        basePrice: 850000,
+        defaultScore: 75,
+        defaultRisk: 'LOW_MEDIUM_RISK'
+    },
+    'US': {
+        name: 'United States',
+        flag: 'https://flagcdn.com/us.svg',
+        baseVolume: 1500000,
+        basePrice: 1300000,
+        defaultScore: 85,
+        defaultRisk: 'LOW_RISK'
+    }
+};
+
+function formatCurrency(value) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0
+    }).format(value);
+}
+
+function mapRiskToSentiment(risk) {
+    switch(risk) {
+        case 'LOW_RISK':
+        case 'LOW_MEDIUM_RISK':
+            return 'Bullish';
+        case 'MEDIUM_RISK':
+            return 'Neutral';
+        case 'MEDIUM_HIGH_RISK':
+        case 'HIGH_RISK':
+            return 'Bearish';
+        default:
+            return 'Neutral';
+    }
+}
+
+async function calculateMetricsForCountry(finalScore, countryCode) {
     try {
-        // Get latest final score
-        const latestScore = await FinalScore.findOne().sort({ timestamp: -1 });
-        const countries = await Country.find({});
-
-        if (!latestScore) {
-            throw new Error('No final score available');
+        if (!finalScore) {
+            throw new Error('Final score is required');
         }
 
-        const metrics = countries.map(country => ({
-            countryCode: country.code,
-            timestamp: new Date(),
-            countryScore: latestScore.final_score, // Menggunakan final score yang sudah ada
-            riskLevel: latestScore.risk_assessment.overall_risk,
-            trend: ['IMPROVING', 'STABLE', 'DECLINING'][Math.floor(Math.random() * 3)],
-            // Mock data untuk metrics lainnya
-            volume24h: Math.floor(Math.random() * 1000000),
-            marketCap: Math.floor(Math.random() * 1000000000)
-        }));
+        if (!COUNTRY_DATA[countryCode]) {
+            throw new Error(`Country ${countryCode} not found in COUNTRY_DATA`);
+        }
 
-        // Hapus metrics lama dan insert yang baru
-        await CountryMetric.deleteMany({});
-        const result = await CountryMetric.insertMany(metrics);
-        
-        logger.log(ctx, `Generated mock metrics for ${result.length} countries`, 'generateMockMetrics');
-        return result;
+        const countryInfo = COUNTRY_DATA[countryCode];
+               
+        // Validate required fields
+        if (!finalScore.risk_assessment || !finalScore.risk_assessment.overall_risk) {
+            throw new Error('Invalid final score data structure');
+        }
+
+        // Use final score if available, otherwise use default values
+        const countryScore = finalScore?.final_score ? 
+            Math.round(finalScore.final_score * 20) : 
+            countryInfo.defaultScore;
+            
+        const trend = finalScore?.short_term_score && finalScore?.long_term_score ? 
+            (finalScore.short_term_score >= finalScore.long_term_score ? 'up' : 'down') : 
+            'neutral';
+
+        // Add validation for division by zero
+        const changePercent = finalScore.long_term_score !== 0 ? 
+            ((finalScore.short_term_score - finalScore.long_term_score) / finalScore.long_term_score * 100).toFixed(1) :
+            '0.0';
+
+        // Calculate dynamic values based on score
+        const volumeMultiplier = countryScore / 1000;
+        const volume24h = Math.round(countryInfo.baseVolume * volumeMultiplier);
+        const indexPrice = Math.round(countryInfo.basePrice * volumeMultiplier);
+
+        return {
+            code: countryCode,
+            name: countryInfo.name,
+            flag: countryInfo.flag,
+            countryScore,
+            volume24h: formatCurrency(volume24h),
+            indexPrice: formatCurrency(indexPrice),
+            sentiment: mapRiskToSentiment(finalScore.risk_assessment.overall_risk),
+            changePercent: parseFloat(changePercent),
+            trend,
+            markPrice: formatCurrency(Math.round(countryScore * 500)),
+            fundingRate: "0.01%",
+            openInterest: formatCurrency(4200000),
+            openTrades: 90000,
+            volumes: formatCurrency(220000),
+            fundingCooldown: "00:35:10",
+            fundingPercent: "0.0100%",
+            liquidationPrice: "4.87M"
+        };
     } catch (error) {
-        logger.log(ctx, `Error generating mock metrics: ${error.message}`, 'generateMockMetrics-error');
+        logger.log('country-metric-service', `Error calculating metrics for country ${countryCode}: ${error.message}`, 'error');
         throw error;
     }
 }
 
-async function getLatestMetricsForAllCountries() {
+// Improve error handling in getLatestMetrics
+async function getLatestMetrics() {
     try {
-        // Check if we have any metrics
-        const metricsCount = await CountryMetric.countDocuments();
         
-        // If no metrics exist, generate them first
-        if (metricsCount === 0) {
-            await generateMockMetrics();
+        const latestScore = await FinalScore.findOne()
+            .sort({ timestamp: -1 })
+            .lean() // Add lean() for better performance
+            .exec();
+        
+        if (!latestScore) {
+            return []; // Return empty array instead of throwing error
         }
 
-        const metrics = await CountryMetric.aggregate([
-            // Sort by timestamp descending to get latest first
-            { $sort: { timestamp: -1 } },
-            
-            // Group by countryCode and get the first (latest) document
-            {
-                $group: {
-                    _id: "$countryCode",
-                    latestMetric: { $first: "$$ROOT" }
+        // Generate metrics for ID and US first
+        const priorityCountries = ['ID', 'US'];
+        const priorityMetrics = await Promise.all(
+            priorityCountries.map(async countryCode => {
+                try {
+                    return await calculateMetricsForCountry(latestScore, countryCode);
+                } catch (error) {
+                    logger.log('country-metric-service', `Error calculating metrics for ${countryCode}: ${error.message}`, 'error');
+                    return null;
                 }
-            },
-            
-            // Lookup country details
-            {
-                $lookup: {
-                    from: "countries",
-                    localField: "_id",
-                    foreignField: "code",
-                    as: "countryDetails"
-                }
-            },
-            
-            // Unwind country details array
-            { $unwind: "$countryDetails" },
-            
-            // Project final structure
-            {
-                $project: {
-                    _id: 0,
-                    code: "$_id",
-                    name: "$countryDetails.name",
-                    flag: "$countryDetails.flagCode",
-                    region: "$countryDetails.description",
-                    metrics: {
-                        score: "$latestMetric.countryScore",
-                        riskLevel: "$latestMetric.riskLevel",
-                        trend: "$latestMetric.trend",
-                        volume24h: "$latestMetric.volume24h",
-                        marketCap: "$latestMetric.marketCap",
-                        timestamp: "$latestMetric.timestamp"
-                    }
-                }
-            }
-        ]);
+            })
+        );
 
-        logger.log(ctx, `Retrieved latest metrics for ${metrics.length} countries`, 'getLatestMetricsForAllCountries');
+        // Filter out any null values from failed calculations
+        const metrics = priorityMetrics.filter(metric => metric !== null);
+        
+        logger.log('country-metric-service', `Generated metrics for ${metrics.length} priority countries (ID, US)`, 'info');
         return metrics;
     } catch (error) {
-        logger.log(ctx, `Error getting latest metrics: ${error.message}`, 'getLatestMetricsForAllCountries-error');
+        logger.log('country-metric-service', `Error getting latest metrics: ${error.message}`, 'error');
         throw error;
     }
 }
 
-// Scheduler untuk update metrics setiap 5 menit
-setInterval(async () => {
+// Improve error handling in getCountryMetrics
+async function getCountryMetrics(countryCode) {
     try {
-        await generateMockMetrics();
-        logger.log(ctx, 'Updated mock metrics', 'metrics-scheduler');
+        if (!countryCode) {
+            throw new Error('Country code is required');
+        }
+
+        if (!COUNTRY_DATA[countryCode]) {
+            throw new Error(`Country ${countryCode} not supported`);
+        }
+
+        const latestScore = await FinalScore.findOne()
+            .sort({ timestamp: -1 })
+            .lean()
+            .exec();
+
+        if (!latestScore) {
+            return null; // Return null for not found
+        }
+
+        return await calculateMetricsForCountry(latestScore, countryCode);
     } catch (error) {
-        logger.log(ctx, `Error in metrics scheduler: ${error.message}`, 'metrics-scheduler-error');
+        logger.log('country-metric-service', `Error getting metrics for country ${countryCode}: ${error.message}`, 'error');
+        throw error;
     }
-}, 5 * 60 * 1000);
+}
+
+async function generateAndSaveMetrics() {
+    try {
+        const metrics = await getLatestMetrics();
+        logger.log('country-metric-service', `Generated metrics for ${metrics.length} countries`, 'success');
+        return metrics;
+    } catch (error) {
+        logger.log('country-metric-service', `Error generating metrics: ${error.message}`, 'error');
+        throw error;
+    }
+}
 
 module.exports = {
-    getLatestMetricsForAllCountries,
-    generateMockMetrics
+    getLatestMetrics,
+    getCountryMetrics,
+    generateAndSaveMetrics
 };
