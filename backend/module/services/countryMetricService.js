@@ -1,22 +1,81 @@
 const FinalScore = require('../models/FinalScore');
 const logger = require('../../bin/helper/logger');
+const { COUNTRY_STATUS, COMING_SOON_METRICS } = require('../../bin/constants/countryStatus');
+const { generateMetricId } = require('../../bin/helper/idGenerator');
 
 const COUNTRY_DATA = {
     'ID': {
         name: 'Indonesia',
+        status: COUNTRY_STATUS.ACTIVE,
         flag: 'https://flagcdn.com/id.svg',
-        baseVolume: 1200000,
-        basePrice: 850000,
-        defaultScore: 75,
-        defaultRisk: 'LOW_MEDIUM_RISK'
+        baseConfig: {
+            baseVolume: 1200000,
+            basePrice: 850000,
+            defaultScore: 75,
+            defaultRisk: 'LOW_MEDIUM_RISK'
+        }
     },
     'US': {
         name: 'United States',
+        status: COUNTRY_STATUS.ACTIVE,
         flag: 'https://flagcdn.com/us.svg',
-        baseVolume: 1500000,
-        basePrice: 1300000,
-        defaultScore: 85,
-        defaultRisk: 'LOW_RISK'
+        baseConfig: {
+            baseVolume: 1500000,
+            basePrice: 1300000,
+            defaultScore: 85,
+            defaultRisk: 'LOW_RISK'
+        }
+    },
+    // New Coming Soon Countries
+    'DE': {
+        name: 'Germany',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/de.svg'
+    },
+    'JP': {
+        name: 'Japan',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/jp.svg'
+    },
+    'IN': {
+        name: 'India',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/in.svg'
+    },
+    'BR': {
+        name: 'Brazil',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/br.svg'
+    },
+    'GB': {
+        name: 'United Kingdom',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/gb.svg'
+    },
+    'CN': {
+        name: 'China',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/cn.svg'
+    },
+    'AU': {
+        name: 'Australia',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/au.svg'
+    },
+    'MX': {
+        name: 'Mexico',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/mx.svg'
+    },
+    'RU': {
+        name: 'Russia',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/ru.svg'
+    },
+    'KR': {
+        name: 'South Korea',
+        status: COUNTRY_STATUS.COMING_SOON,
+        flag: 'https://flagcdn.com/kr.svg'
     }
 };
 
@@ -49,40 +108,56 @@ async function calculateMetricsForCountry(finalScore, countryCode) {
             throw new Error('Final score is required');
         }
 
-        if (!COUNTRY_DATA[countryCode]) {
+        const countryData = COUNTRY_DATA[countryCode];
+        if (!countryData) {
             throw new Error(`Country ${countryCode} not found in COUNTRY_DATA`);
         }
 
-        const countryInfo = COUNTRY_DATA[countryCode];
-               
-        // Validate required fields
+        const metricId = generateMetricId(countryCode);
+
+        // Handle Coming Soon countries
+        if (countryData.status === COUNTRY_STATUS.COMING_SOON) {
+            return {
+                metricId,
+                code: countryCode,
+                name: countryData.name,
+                flag: countryData.flag,
+                status: COUNTRY_STATUS.COMING_SOON,
+                ...COMING_SOON_METRICS
+            };
+        }
+
+        // Handle Active countries
+        if (!countryData.baseConfig) {
+            throw new Error(`Base configuration missing for country ${countryCode}`);
+        }
+
         if (!finalScore.risk_assessment || !finalScore.risk_assessment.overall_risk) {
             throw new Error('Invalid final score data structure');
         }
 
-        // Use final score if available, otherwise use default values
         const countryScore = finalScore?.final_score ? 
             Math.round(finalScore.final_score * 20) : 
-            countryInfo.defaultScore;
+            countryData.baseConfig.defaultScore;
             
         const trend = finalScore?.short_term_score && finalScore?.long_term_score ? 
             (finalScore.short_term_score >= finalScore.long_term_score ? 'up' : 'down') : 
             'neutral';
 
-        // Add validation for division by zero
         const changePercent = finalScore.long_term_score !== 0 ? 
             ((finalScore.short_term_score - finalScore.long_term_score) / finalScore.long_term_score * 100).toFixed(1) :
             '0.0';
 
-        // Calculate dynamic values based on score
         const volumeMultiplier = countryScore / 1000;
-        const volume24h = Math.round(countryInfo.baseVolume * volumeMultiplier);
-        const indexPrice = Math.round(countryInfo.basePrice * volumeMultiplier);
+        const volume24h = Math.round(countryData.baseConfig.baseVolume * volumeMultiplier);
+        const indexPrice = Math.round(countryData.baseConfig.basePrice * volumeMultiplier);
 
         return {
+            metricId,
             code: countryCode,
-            name: countryInfo.name,
-            flag: countryInfo.flag,
+            name: countryData.name,
+            flag: countryData.flag,
+            status: COUNTRY_STATUS.ACTIVE,
             countryScore,
             volume24h: formatCurrency(volume24h),
             indexPrice: formatCurrency(indexPrice),
@@ -104,23 +179,21 @@ async function calculateMetricsForCountry(finalScore, countryCode) {
     }
 }
 
-// Improve error handling in getLatestMetrics
 async function getLatestMetrics() {
     try {
-        
         const latestScore = await FinalScore.findOne()
             .sort({ timestamp: -1 })
-            .lean() // Add lean() for better performance
+            .lean()
             .exec();
         
         if (!latestScore) {
-            return []; // Return empty array instead of throwing error
+            return [];
         }
 
-        // Generate metrics for ID and US first
-        const priorityCountries = ['ID', 'US'];
-        const priorityMetrics = await Promise.all(
-            priorityCountries.map(async countryCode => {
+        // Get metrics for all countries
+        const allCountries = Object.keys(COUNTRY_DATA);
+        const allMetrics = await Promise.all(
+            allCountries.map(async countryCode => {
                 try {
                     return await calculateMetricsForCountry(latestScore, countryCode);
                 } catch (error) {
@@ -131,9 +204,9 @@ async function getLatestMetrics() {
         );
 
         // Filter out any null values from failed calculations
-        const metrics = priorityMetrics.filter(metric => metric !== null);
+        const metrics = allMetrics.filter(metric => metric !== null);
         
-        logger.log('country-metric-service', `Generated metrics for ${metrics.length} priority countries (ID, US)`, 'info');
+        logger.log('country-metric-service', `Generated metrics for ${metrics.length} countries`, 'info');
         return metrics;
     } catch (error) {
         logger.log('country-metric-service', `Error getting latest metrics: ${error.message}`, 'error');
@@ -141,7 +214,6 @@ async function getLatestMetrics() {
     }
 }
 
-// Improve error handling in getCountryMetrics
 async function getCountryMetrics(countryCode) {
     try {
         if (!countryCode) {
@@ -158,7 +230,7 @@ async function getCountryMetrics(countryCode) {
             .exec();
 
         if (!latestScore) {
-            return null; // Return null for not found
+            return null;
         }
 
         return await calculateMetricsForCountry(latestScore, countryCode);
