@@ -154,9 +154,7 @@ const countryData: CountryData[] = [
 
 export default function TradingPlatform() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<"discover" | "history">(
-    "discover"
-  );
+  const [activeTab, setActiveTab] = useState<"discover" | "history">("discover");
 
   // Filter countries based on search term
   const filteredCountries = countryData.filter((country) =>
@@ -166,53 +164,60 @@ export default function TradingPlatform() {
   return (
     <div className="min-h-screen bg-[#111214] text-white">
       {/* Header with Tabs and Search */}
-      <div className="p-6 bg-[#111214]">
-        <div className="self-stretch inline-flex justify-between items-center w-full">
-          <div className="px-2 py-[7px] rounded-[100px] outline outline-2 outline-offset-[-2px] outline-[#1d1f22] flex justify-start items-center gap-2.5">
+      <div className="p-4 md:p-6 bg-[#111214]">
+        <div className="w-full flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center">
+          {/* Tab Navigation */}
+          <div className="px-2 py-2 rounded-[100px] outline outline-2 outline-offset-[-2px] outline-[#1d1f22] flex justify-start items-center gap-2.5 w-full md:w-auto">
             <motion.button
               onClick={() => setActiveTab("discover")}
-              className={`h-[63px] px-6 py-1.5 ${activeTab === "discover" ? "bg-[#262a33]" : ""
-                } rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex justify-start items-center gap-4 flex-wrap content-center`}
+              className={`h-12 md:h-[63px] px-4 md:px-6 py-1.5 ${
+                activeTab === "discover" ? "bg-[#262a33]" : ""
+              } rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex justify-center items-center gap-4 flex-1 md:flex-none`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
             >
               <div
-                className={`justify-start ${activeTab === "discover" ? "text-white" : "text-[#505050]"
-                  } text-xl font-normal font-['Inter'] leading-tight`}
+                className={`${
+                  activeTab === "discover" ? "text-white" : "text-[#505050]"
+                } text-base md:text-xl font-normal font-['Inter'] leading-tight`}
               >
                 Discover
               </div>
             </motion.button>
             <motion.button
               onClick={() => setActiveTab("history")}
-              className={`h-[63px] px-6 py-1.5 ${activeTab === "history" ? "bg-[#262a33]" : ""
-                } rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex justify-start items-center gap-4 flex-wrap content-center`}
+              className={`h-12 md:h-[63px] px-4 md:px-6 py-1.5 ${
+                activeTab === "history" ? "bg-[#262a33]" : ""
+              } rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex justify-center items-center gap-4 flex-1 md:flex-none`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
             >
               <div
-                className={`justify-start ${activeTab === "history" ? "text-white" : "text-[#505050]"
-                  } text-xl font-normal font-['Inter'] leading-tight`}
+                className={`${
+                  activeTab === "history" ? "text-white" : "text-[#505050]"
+                } text-base md:text-xl font-normal font-['Inter'] leading-tight`}
               >
                 History
               </div>
             </motion.button>
           </div>
+
+          {/* Search Bar */}
           <AnimatePresence>
             {activeTab === "discover" && (
               <motion.div
-                className="flex justify-end"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                className="flex justify-center md:justify-end w-full md:w-auto"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
               >
-                <div className="w-[445px] h-[63px] px-6 py-1.5 bg-[#1d1f22] rounded-full shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex items-center gap-4 relative">
-                  <div className="w-[34px] h-[34px] relative overflow-hidden flex-shrink-0">
+                <div className="w-full max-w-md md:w-[445px] h-12 md:h-[63px] px-4 md:px-6 py-1.5 bg-[#1d1f22] rounded-full shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex items-center gap-3 md:gap-4 relative">
+                  <div className="w-6 h-6 md:w-[34px] md:h-[34px] relative overflow-hidden flex-shrink-0">
                     <svg
-                      className="w-[27.07px] h-[27.07px] absolute left-[2.83px] top-[2.83px]"
+                      className="w-5 h-5 md:w-[27.07px] md:h-[27.07px] absolute left-[2px] top-[2px] md:left-[2.83px] md:top-[2.83px]"
                       viewBox="0 0 24 24"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
@@ -231,13 +236,9 @@ export default function TradingPlatform() {
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-transparent text-[#d6d6d6] text-xl font-normal font-['Inter'] leading-tight focus:outline-none"
+                      className="w-full bg-transparent text-[#d6d6d6] text-base md:text-xl font-normal font-['Inter'] leading-tight focus:outline-none"
+                      placeholder="Search countries"
                     />
-                    {!searchTerm && (
-                      <div className="absolute inset-0 pointer-events-none text-[#d6d6d6] text-xl font-normal font-['Inter'] leading-tight">
-                        Search countries
-                      </div>
-                    )}
                   </div>
                 </div>
               </motion.div>
@@ -247,7 +248,7 @@ export default function TradingPlatform() {
       </div>
 
       {/* Main content */}
-      <div className="p-4 pt-2 bg-[#111214]">
+      <div className="p-3 md:p-4 pt-0 md:pt-2 bg-[#111214]">
         <AnimatePresence mode="wait">
           {activeTab === "discover" ? (
             <motion.div
@@ -256,7 +257,7 @@ export default function TradingPlatform() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 place-items-center"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
             >
               {filteredCountries.map((country) => (
                 <CountryCard key={country.id} country={country} />
@@ -269,6 +270,7 @@ export default function TradingPlatform() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+              className="w-full overflow-x-auto"
             >
               <HistoryTable />
             </motion.div>
