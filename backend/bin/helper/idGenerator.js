@@ -5,7 +5,7 @@ const COUNTRY_REGIONS = {
     'CN': '4', 
     'KR': '4',
     'IN': '4',
-
+ 
 // America
     'US': '2', 
     'CA': '2',
