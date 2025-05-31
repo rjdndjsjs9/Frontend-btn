@@ -9,10 +9,15 @@ router.get("/country", countryController.getAllCountries);
 
 // GET /api/metrics/latest - Get latest metrics
 router.get("/metrics/latest", countryMetricController.getLatestMetrics);
+router.get("/metrics/cards", countryMetricController.getAllCardMetrics);
+router.get("/metrics/trades", countryMetricController.getAllTradeMetrics);
 
-// GET /api/country/:countryCode/metrics - Get metrics by country
+// Country-specific metrics routes
 router.get("/country/:countryCode/metrics", countryMetricController.getCountryMetrics);
+router.get("/country/:countryCode/card", countryMetricController.getCountryCard);
+router.get("/country/:countryCode/trade", countryMetricController.getTradeDetail);
 
 // POST /api/metrics/generate - Generate initial mock metrics
 router.post("/metrics/generate", countryMetricController.generateMetrics);
+
 module.exports = router;

@@ -2,6 +2,7 @@ const FinalScore = require('../models/FinalScore');
 const logger = require('../../bin/helper/logger');
 const { COUNTRY_STATUS, COMING_SOON_METRICS } = require('../../bin/constants/countryStatus');
 const { generateMetricId } = require('../../bin/helper/idGenerator');
+const COUNTRY_DESCRIPTIONS = require('../../bin/constants/countryDescriptions');
 
 const COUNTRY_DATA = {
     'ID': {
@@ -251,8 +252,133 @@ async function generateAndSaveMetrics() {
     }
 }
 
+async function getCountryCardMetrics(countryCode) {
+    try {
+        const metrics = await getCountryMetrics(countryCode);
+        
+        if (!metrics) {
+            return null;
+        }
+
+        return {
+            metricId: metrics.metricId,
+            code: metrics.code,
+            name: metrics.name,
+            flag: metrics.flag,
+            countryScore: metrics.countryScore,
+            volume24h: metrics.volume24h,
+            indexPrice: metrics.indexPrice,
+            changePercent: metrics.changePercent
+        };
+    } catch (error) {
+        logger.log('country-metric-service', `Error getting card metrics for country ${countryCode}: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
+async function getTradeDetailMetrics(countryCode) {
+    try {
+        const metrics = await getCountryMetrics(countryCode);
+        
+        if (!metrics) {
+            return null;
+        }
+
+        const countryDesc = COUNTRY_DESCRIPTIONS[countryCode] || COUNTRY_DESCRIPTIONS.DEFAULT_COMING_SOON;
+
+        return {
+            metricId: metrics.metricId,
+            code: metrics.code,
+            name: metrics.name,
+            flag: metrics.flag,
+            about: countryDesc.full,
+            tradingMetrics: {
+                countryScore: metrics.countryScore,
+                openTrades: metrics.openTrades,
+                volume24h: metrics.volume24h,
+                fundingCooldown: metrics.fundingCooldown
+            },
+            marketInfo: {
+                indexPrice: metrics.indexPrice,
+                sentiment: metrics.sentiment,
+                trend: metrics.trend,
+                markPrice: metrics.markPrice,
+                fundingRate: metrics.fundingRate,
+                openInterest: metrics.openInterest,
+                liquidationPrice: metrics.liquidationPrice
+            }
+        };
+    } catch (error) {
+        logger.log('country-metric-service', `Error getting trade metrics for country ${countryCode}: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
+async function getAllCardMetrics() {
+    try {
+        const metrics = [];
+        for (const [code, country] of Object.entries(COUNTRY_DATA)) {
+            if (country.status === COUNTRY_STATUS.ACTIVE) {
+                const cardMetrics = await getCountryCardMetrics(code);
+                metrics.push({
+                    ...cardMetrics,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                metrics.push({
+                    metricId: generateMetricId(),
+                    code,
+                    name: country.name,
+                    flag: country.flag,
+                    status: COUNTRY_STATUS.COMING_SOON,
+                    ...COMING_SOON_METRICS,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+        return metrics;
+    } catch (error) {
+        logger.log('country-metric-service', `Error getting all card metrics: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
+async function getAllTradeMetrics() {
+    try {
+        const metrics = [];
+        for (const [code, country] of Object.entries(COUNTRY_DATA)) {
+            if (country.status === COUNTRY_STATUS.ACTIVE) {
+                const tradeMetrics = await getTradeDetailMetrics(code);
+                metrics.push({
+                    ...tradeMetrics,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                metrics.push({
+                    metricId: generateMetricId(),
+                    code,
+                    name: country.name,
+                    flag: country.flag,
+                    status: COUNTRY_STATUS.COMING_SOON,
+                    about: COUNTRY_DESCRIPTIONS[code] || COUNTRY_DESCRIPTIONS.DEFAULT_COMING_SOON,
+                    ...COMING_SOON_METRICS,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+        return metrics;
+    } catch (error) {
+        logger.log('country-metric-service', `Error getting all trade metrics: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
 module.exports = {
     getLatestMetrics,
     getCountryMetrics,
-    generateAndSaveMetrics
+    generateAndSaveMetrics,
+    getCountryCardMetrics,
+    getTradeDetailMetrics,
+    getAllCardMetrics,
+    getAllTradeMetrics
 };
