@@ -16,224 +16,20 @@ import {
 import { parseUnits } from "viem";
 
 import {
-  USDC_ADDRESSES,
-  USDC_ABI,
-  MockUSDC_ABI,
   RPC_URL,
+  POSITION_ADDRESS,
+  POSITION_ABI,
 } from "@/lib/contracts/constants";
 import { usePositionsStore } from "@/components/trading/PositionsContext";
-import { useTradeHistoryStore } from "@/components/dashboard/tradeHistoryStore";
 import HistoryTable from "@/components/dashboard/HistoryTable";
 import { fetcher } from "@/src/services/fetcher";
-
-// Add these type definitions before the ClosePositionModal component
-interface ClosePositionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  position: {
-    size: string;
-    leverage: string;
-    isLong: boolean;
-  };
-  country: {
-    name: string;
-    markPrice: string;
-  };
-}
-
-type StepType = 1 | 2 | 3 | 4 | null;
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function ClosePositionModal({
-  isOpen,
-  onClose,
-  position,
-  country,
-}: ClosePositionModalProps) {
-  const [step, setStep] = useState<StepType>(1);
-  const [previousBalance] = useState(1000.0);
-
-  const steps = {
-    1: {
-      title: "Close Position",
-      subtitle: "Are you sure you want to close this position?",
-    },
-    2: {
-      title: "Confirm PnL",
-      subtitle: "Review your position's performance",
-    },
-    3: {
-      title: "Updated Balance",
-      subtitle: "Your new balance after closing position",
-    },
-    4: {
-      title: "Trade History",
-      subtitle: "Position successfully closed",
-    },
-    99: {
-      title: "Trade History",
-      subtitle: "View your trade history",
-    },
-  } as const;
-
-  if (!isOpen || step === null) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[#1d1f22] rounded-xl p-6 w-[400px]">
-        {/* Progress Steps */}
-        <div className="flex justify-between items-center mb-8">
-          {[1, 2, 3, 4].map((number) => (
-            <div key={number} className="flex items-center">
-              <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center ${step === number
-                  ? "bg-[#155dee] text-white"
-                  : step > number
-                    ? "bg-[#155dee] text-white"
-                    : "bg-[#2d2d2e] text-gray-400"
-                  }`}
-              >
-                {number}
-              </div>
-              {number < 4 && (
-                <div
-                  className={`h-0.5 flex-1 ${step > number ? "bg-[#155dee]" : "bg-[#2d2d2e]"
-                    }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div className="text-center mb-6">
-          <h2 className="text-white text-xl font-semibold mb-2">
-            {steps[step].title}
-          </h2>
-          <p className="text-gray-400 text-sm">{steps[step].subtitle}</p>
-        </div>
-
-        {/* Step Content */}
-        {step === 1 && (
-          <div className="space-y-4 mb-6">
-            <div className="flex justify-between">
-              <span className="text-gray-400">Position</span>
-              <span className="text-white">
-                {country.name} {position.isLong ? "LONG" : "SHORT"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Size</span>
-              <span className="text-white">${position.size}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Entry Price</span>
-              <span className="text-white">{country.markPrice}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Mark Price</span>
-              <span className="text-white">{country.markPrice}</span>
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4 mb-6">
-            <div className="text-center">
-              <div className="text-[#16b264] text-2xl font-bold">+$0.00</div>
-              <div className="text-[#16b264]">(+0.0%)</div>
-            </div>
-            <div className="flex justify-between mt-4">
-              <span className="text-gray-400">Trading Fees</span>
-              <span className="text-white">-$0.00</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Net PnL</span>
-              <span className="text-[#16b264]">+$0.00</span>
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="text-center mb-6">
-            <div className="text-white text-3xl font-bold mb-2">$1,234.56</div>
-            <div className="text-gray-400">
-              Previous: ${previousBalance.toFixed(2)}
-            </div>
-          </div>
-        )}
-
-        {step === 4 && (
-          <div className="space-y-4 mb-6">
-            <div className="flex justify-between">
-              <div>
-                <div className="text-white">
-                  {country.name} {position.isLong ? "LONG" : "SHORT"}
-                </div>
-                <div className="text-gray-400 text-sm">
-                  Closed at {new Date().toLocaleTimeString()}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-[#16b264]">+$0.00</div>
-                <div className="text-gray-400 text-sm">0.0%</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Buttons */}
-        <div className="flex gap-4">
-          {step === 1 && (
-            <>
-              <button
-                onClick={onClose}
-                className="flex-1 py-3 rounded-full bg-[#2d2d2e] text-white"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setStep(2)}
-                className="flex-1 py-3 rounded-full bg-[#155dee] text-white"
-              >
-                Continue
-              </button>
-            </>
-          )}
-          {step === 2 && (
-            <button
-              onClick={() => setStep(3)}
-              className="w-full py-3 rounded-full bg-[#155dee] text-white"
-            >
-              Continue
-            </button>
-          )}
-          {step === 3 && (
-            <button
-              onClick={() => setStep(4)}
-              className="w-full py-3 rounded-full bg-[#155dee] text-white"
-            >
-              View History
-            </button>
-          )}
-          {step === 4 && (
-            <button
-              onClick={onClose}
-              className="w-full py-3 rounded-full bg-[#155dee] text-white"
-            >
-              Done
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function CountryPage() {
   const { id } = useParams();
   const countryId = typeof id === "string" ? id.toUpperCase() : "";
-  console.log(`${RPC_URL}/api/v1/country/${countryId}/trade`)
+
+  const [previousBalance, setPreviousBalance] = useState<number | null>(null);
+  const [newBalance, setNewBalance] = useState<number | null>(null);
   const { data, error, isLoading } = useSWR(
     countryId ? `${RPC_URL}/api/v1/country/${countryId}/trade` : null,
     fetcher
@@ -262,14 +58,13 @@ export default function CountryPage() {
     };
   }, [data]);
 
-  // const country = countryData[id as keyof typeof countryData];
-  const { addTrade, updateTrade } = useTradeHistoryStore();
   const [tradeId, setTradeId] = useState<string>("");
 
   const [position, setPosition] = useState({
     size: "",
     leverage: "1",
     isLong: true,
+    entryPrice: 0,
   });
 
   const [showPosition, setShowPosition] = useState(false);
@@ -281,15 +76,14 @@ export default function CountryPage() {
   const { address } = useAccount();
   const { data: walletBalance, refetch: refetchBalance } = useBalance({
     address,
-    token: "0x2904921988f84BBD764D585e6f0249869FDEb25C",
+    token: "0xD0c8dD0F73fdf0f7Dd90960783818A9204c9DB1e",
   });
 
   const { triggerRefresh } = usePositionsStore();
 
-  // Use the hook unconditionally
   const { refetch: refetchPositionFromHook } = useReadContract({
-    address: USDC_ADDRESSES[50002],
-    abi: MockUSDC_ABI,
+    address: POSITION_ADDRESS[50002],
+    abi: POSITION_ABI,
     functionName: "getPosition",
     args: [] as const,
     account: address,
@@ -302,13 +96,44 @@ export default function CountryPage() {
     return Promise.resolve();
   };
 
+  // Helper to calculate PnL, percentage, and fees
+  const getPnLInfo = () => {
+    const entry = parseFloat(country?.markPrice || "0");
+    const mark = parseFloat(country?.markPrice || "0"); // Replace with actual mark price if available
+    const size = parseFloat(position?.size || "0");
+    const isLong = position?.isLong;
+
+    if (!entry || !mark || !size) {
+      return {
+        pnl: 0,
+        percentage: 0,
+        fees: 0,
+        isProfit: true,
+      };
+    }
+
+    // Example calculation (replace with your actual logic)
+    const priceDiff = isLong ? mark - entry : entry - mark;
+    const pnl = priceDiff * size;
+    const percentage = entry ? (priceDiff / entry) * 100 : 0;
+    const fees = size * 0.0025; // Example: 0.25% fee
+
+    return {
+      pnl,
+      percentage,
+      fees,
+      isProfit: pnl >= 0,
+    };
+  };
+
   useEffect(() => {
     if (hash && !isConfirming) {
-      const savedSize = position.size; // Save the size before resetting
+      const savedSize = position.size;
       setPosition({
-        size: savedSize, // Keep the size
+        size: savedSize,
         leverage: "1",
         isLong: true,
+        entryPrice: 120,
       });
       setShowPosition(true);
 
@@ -353,46 +178,20 @@ export default function CountryPage() {
         (Number(position.size) * Number(position.leverage)).toString(),
         decimals
       );
-      console.log("Approving", sizeInWei, "tokens");
 
-      // Generate unique trade ID
       const newTradeId = `trade-${Date.now()}-${Math.random()
         .toString(36)
         .substr(2, 9)}`;
       setTradeId(newTradeId);
 
-      // Add trade to history immediately when placing
-      // addTrade({
-      //   id: newTradeId,
-      //   country: country.name,
-      //   countryCode: id as string,
-      //   time: new Date().toLocaleTimeString(),
-      //   entryPrice: country.markPrice,
-      //   marketPrice: country.markPrice,
-      //   pnl: {
-      //     amount: "$0.00",
-      //     percentage: "0.0",
-      //     isProfit: true,
-      //   },
-      //   status: "Open",
-      // });
-
-      // 1. Approve contract to use token
-      const approvalTx = await writeContract({
-        address: USDC_ADDRESSES[50002],
-        abi: USDC_ABI,
-        functionName: "approve",
-        args: [USDC_ADDRESSES[50002], sizeInWei],
-      });
-      console.log("Approval TX:", approvalTx);
 
       // Wait for approval confirmation
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // 2. Open Position
       const tradeTx = await writeContract({
-        address: USDC_ADDRESSES[50002],
-        abi: MockUSDC_ABI,
+        address: POSITION_ADDRESS[50002],
+        abi: POSITION_ABI,
         functionName: "openPosition",
         args: [
           id,
@@ -400,9 +199,13 @@ export default function CountryPage() {
           Number(position.leverage),
           sizeInWei,
         ],
-        value: sizeInWei,
       });
       console.log("Trade TX:", tradeTx);
+
+      setPosition({
+        ...position,
+        entryPrice: country?.markPrice,
+      });
 
       // Refresh position data explicitly
       refetchPosition().catch((err) =>
@@ -424,26 +227,30 @@ export default function CountryPage() {
 
   const isProcessing = isPending || isConfirming;
 
-  const handleCloseStepContinue = () => {
+  const handleCloseStepContinue = async () => {
     if (closeStep === 1) {
       setCloseStep(2); // Go to step 2
     } else if (closeStep === 2) {
-      setCloseStep(3); // Go to step 3
+      setCloseStep(3);
+      if (walletBalance) {
+        setPreviousBalance(Number(walletBalance.formatted));
+        const { pnl, fees } = getPnLInfo();
+        setNewBalance(Number(walletBalance.formatted) + pnl - fees);
+      }
     } else if (closeStep === 3) {
       setCloseStep(4); // Go to step 4
     } else if (closeStep === 4) {
       // Update the existing trade's status to Closed
       if (tradeId) {
-        updateTrade(tradeId, {
-          status: "Closed",
-          marketPrice: country?.markPrice ?? "-",
-          time: new Date().toLocaleTimeString(),
-          pnl: {
-            amount: "$0.00",
-            percentage: "0.0",
-            isProfit: true,
-          },
+        await writeContract({
+          address: POSITION_ADDRESS[50002],
+          abi: POSITION_ABI,
+          functionName: "closePosition",
+          args: [
+            address as `0x${string}`,
+          ],
         });
+
       }
       setCloseStep(99); // Go to history table
       setShowPosition(false);
@@ -1330,22 +1137,33 @@ export default function CountryPage() {
                               Review your position&apos;s performance
                             </p>
                           </div>
-                          <div className="text-center mb-6">
-                            <div className="text-[#16b264] text-xl sm:text-2xl font-bold">
-                              +$0.00
-                            </div>
-                            <div className="text-[#16b264]">(+0.0%)</div>
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
-                              <span className="text-gray-400 text-sm">Trading Fees</span>
-                              <span className="text-white text-sm">-$0.00</span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
-                              <span className="text-gray-400 text-sm">Net PnL</span>
-                              <span className="text-[#16b264] text-sm">+$0.00</span>
-                            </div>
-                          </div>
+                          {(() => {
+                            const { pnl, percentage, fees, isProfit } = getPnLInfo();
+                            return (
+                              <>
+                                <div className="text-center mb-6">
+                                  <div className={`text-xl sm:text-2xl font-bold ${isProfit ? "text-[#16b264]" : "text-[#ff4545]"}`}>
+                                    {pnl >= 0 ? "+" : "-"}${Math.abs(pnl).toFixed(2)}
+                                  </div>
+                                  <div className={isProfit ? "text-[#16b264]" : "text-[#ff4545]"}>
+                                    ({percentage >= 0 ? "+" : "-"}{Math.abs(percentage).toFixed(2)}%)
+                                  </div>
+                                </div>
+                                <div className="space-y-3">
+                                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                                    <span className="text-gray-400 text-sm">Trading Fees</span>
+                                    <span className="text-white text-sm">-${fees.toFixed(2)}</span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                                    <span className="text-gray-400 text-sm">Net PnL</span>
+                                    <span className={isProfit ? "text-[#16b264] text-sm" : "text-[#ff4545] text-sm"}>
+                                      {pnl - fees >= 0 ? "+" : "-"}${Math.abs(pnl - fees).toFixed(2)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </>
+                            );
+                          })()}
                         </>
                       )}
 
@@ -1361,9 +1179,11 @@ export default function CountryPage() {
                           </div>
                           <div className="text-center">
                             <div className="text-white text-2xl sm:text-3xl font-bold mb-2">
-                              $1,234.56
+                              {newBalance !== null ? `$${newBalance.toFixed(2)}` : "Loading..."}
                             </div>
-                            <div className="text-gray-400 text-sm">Previous: $1,000.00</div>
+                            <div className="text-gray-400 text-sm">
+                              Previous: {previousBalance !== null ? `$${previousBalance.toFixed(2)}` : "Loading..."}
+                            </div>
                           </div>
                         </>
                       )}
