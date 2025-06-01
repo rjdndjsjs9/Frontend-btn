@@ -16,7 +16,6 @@ router.get("/v1/index-saham", indexSahamController.get);
 router.get("/v1/obligasi", obligasiController.get);
 router.post("/v1/final-score/calculate", finalScoreController.calculate);
 router.get("/v1/final-score/latest", finalScoreController.getLatest);
-router.get("/v1/trade-history/:userId", tradeHistoryController.getByUserId);
-router.post("/v1/trade-history", tradeHistoryController.store);
+router.get("/v1/trade-history/:userAddress", tradeHistoryController.getByUserId);
 
 module.exports = router;

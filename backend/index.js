@@ -12,7 +12,7 @@ dotenv.config();
 const app = express();
 const port = global_config.get("/port");
 const mongoUri = global_config.get("/mongo");
-app.locals.cache = new NodeCache({ stdTTL: 300 }); // 5 minutes cache
+app.locals.cache = new NodeCache({ stdTTL: 300 });
 
 // Debug middleware
 app.use((req, res, next) => {
@@ -48,7 +48,7 @@ app.use('/api', countryRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   logger.log('express', `Error: ${err.message}`, 'error');
-  
+
   if (err.name === 'AuthenticationError') {
     return res.status(401).json({
       status: false,
@@ -56,7 +56,7 @@ app.use((err, req, res, next) => {
       error: 'Invalid credentials'
     });
   }
-  
+
   res.status(500).json({
     status: false,
     message: 'Internal Server Error',
