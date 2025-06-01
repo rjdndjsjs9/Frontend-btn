@@ -1,15 +1,12 @@
 import { Address } from "viem";
 import MockUSDC_ABI_Imported from "./MockUSDC.json";
 
-
 // Address of Trading Contract
 export const USDC_ADDRESSES: Record<number, Address> = {
   // Base  deployment
-  50002: "0x2904921988f84BBD764D585e6f0249869FDEb25C", 
+  50002: "0x2904921988f84BBD764D585e6f0249869FDEb25C",
 };
 
-
-// Use the actual contract ABI
 export const MockUSDC_ABI = [
   {
     inputs: [
@@ -80,7 +77,6 @@ export const MockUSDC_ABI = [
     type: "function",
   },
   {
-    // ERC20InsufficientAllowance error definition from OpenZeppelin
     type: "error",
     name: "ERC20InsufficientAllowance",
     inputs: [
@@ -91,5 +87,6 @@ export const MockUSDC_ABI = [
   },
 ] as const;
 
-// Export imported JSON if needed
 export const USDC_ABI = MockUSDC_ABI_Imported;
+
+export const RPC_URL = `http://localhost:1000`;
