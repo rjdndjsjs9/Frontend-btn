@@ -2,7 +2,6 @@
 const logger = require('../../bin/helper/logger');
 const positionEvent = require('../models/PositionEvent');
 const ctx = 'trade-history-service';
-const mongoose = require('mongoose');
 
 async function getTradeHistoryById(userAddress) {
   try {
