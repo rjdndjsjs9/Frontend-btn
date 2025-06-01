@@ -31,14 +31,13 @@ export default function RootPage() {
             <div className="flex justify-center mt-8 md:mt-10 lg:mt-[80px] px-4">
               <button
                 onClick={() => router.push("/dashboard")}
-                className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-medium font-['Inter'] leading-loose px-4 sm:px-6 lg:px-[26px] py-3 md:py-4 lg:py-[16.25px] bg-gradient-to-br from-[#111214] to-[#22242a] rounded-[100px] shadow-[-12px_-12px_24px_0px_rgba(21,94,239,0.24)] shadow-[12px_12px_24px_0px_rgba(255,175,41,0.24)] outline outline-[3px] outline-[#155dee] inline-flex justify-center items-center gap-[13px] overflow-hidden w-full max-w-xs sm:max-w-sm md:max-w-none md:w-auto"
+                className="text-white text-base sm:text-sm md:text-md lg:text-lg font-medium font-['Inter'] leading-loose px-4 sm:px-6 lg:px-[26px] py-3 md:py-4 lg:py-[16.25px] bg-gradient-to-br from-[#111214] to-[#22242a] rounded-[100px] shadow-[-12px_-12px_24px_0px_rgba(21,94,239,0.24)] shadow-[12px_12px_24px_0px_rgba(255,175,41,0.24)] outline outline-[3px] outline-[#155dee] inline-flex justify-center items-center gap-[13px] overflow-hidden w-full max-w-xs sm:max-w-sm md:max-w-none md:w-auto"
               >
                 Start Trading Now
               </button>
             </div>
           </div>
 
-          {/* Dashboard preview */}
           <div className="relative mx-auto max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-4xl mt-8 md:mt-10 lg:mt-20 px-4">
             <div className="absolute -inset-6 -rotate-180 bg-gradient-to-b from-[#ffaf29] to-[#155dee] outline outline-1 outline-offset-[-0.50px] outline-black blur-[200px]"></div>
             <div className="w-full aspect-[16.5/14.2] bg-gradient-to-b from-[#0A1428] via-[#1A2036] to-[#1A1510] rounded-xl overflow-hidden shadow-[0_0_100px_rgba(30,64,175,0.3)] border border-blue-900/40">
@@ -56,11 +55,9 @@ export default function RootPage() {
         </div>
       </section>
 
-      {/* Why We're Different Section */}
       <section className="py-10 md:py-20 mt-10 md:mt-20 px-4 relative">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row gap-8 md:gap-10">
-            {/* Heading */}
             <div className="w-full lg:w-1/4 mb-8 lg:mb-0 flex flex-col justify-center">
               <h2 className="font-bold leading-tight">
                 <span className="block w-full text-center lg:text-left bg-gradient-to-b from-[#f1f1ef] to-[#f1f1ef]/20 text-transparent bg-clip-text text-xl sm:text-2xl md:text-3xl lg:text-5xl xl:text-[68px] font-medium font-['Inter'] tracking-[-3%] leading-tight md:leading-[75.14px]">
@@ -68,7 +65,7 @@ export default function RootPage() {
                 </span>
               </h2>
             </div>
-            {/* Card Grid */}
+
             <div className="w-full lg:w-3/4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-6">
                 {/* Card 1 */}
@@ -96,8 +93,7 @@ export default function RootPage() {
                     </div>
                   </div>
                 </div>
-                
-                {/* Card 2 */}
+
                 <div className="w-full h-full p-4 md:p-6 bg-[#202122]/60 rounded-2xl shadow outline outline-1 outline-[#323232] flex flex-col gap-4">
                   <div className="h-12 w-12 md:h-14 md:w-14 rounded-2xl bg-blue-500/30 flex items-center justify-center">
                     <svg
@@ -161,7 +157,7 @@ export default function RootPage() {
             Stay Ahead of the Market with Real-Time Data
           </div>
         </div>
-        
+
         <div className="max-w-6xl mx-auto">
           {/* Live Leaderboard - Full width on mobile */}
           <div className="mb-8 bg-gradient-to-r from-black/0 to-black/20 rounded-2xl shadow outline outline-1 outline-[#323232] p-4 md:p-6 gap-6">
@@ -174,7 +170,7 @@ export default function RootPage() {
                   See how top traders are performing. Check out profit/loss rankings and accuracy rates of traders who have successfully predicted country trends.
                 </div>
               </div>
-              
+
               <div className="lg:w-1/2">
                 <div className="bg-[#1d1f22] rounded-2xl shadow outline outline-1 outline-[#202327] p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between mb-2">
@@ -196,12 +192,12 @@ export default function RootPage() {
                           Rank #{user.rank}
                         </span>
                         <div className="flex items-center gap-2 flex-1 justify-center">
-                          <Image 
-                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover" 
-                            src={`https://i.pravatar.cc/150?img=${user.img}`} 
-                            alt={`User ${user.img}`} 
-                            width={32} 
-                            height={32} 
+                          <Image
+                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
+                            src={`https://i.pravatar.cc/150?img=${user.img}`}
+                            alt={`User ${user.img}`}
+                            width={32}
+                            height={32}
                           />
                           <span className={`${user.isUser ? 'text-white font-medium' : 'text-white'} text-xs sm:text-sm`}>
                             {user.name}
@@ -238,12 +234,12 @@ export default function RootPage() {
                       strokeWidth="3"
                       points="0,80 40,60 80,65 120,20 160,40 200,10 240,30 280,20"
                     />
-                    {[[0,80],[40,60],[80,65],[120,20],[160,40],[200,10],[240,30],[280,20]].map(([x, y], i) => (
+                    {[[0, 80], [40, 60], [80, 65], [120, 20], [160, 40], [200, 10], [240, 30], [280, 20]].map(([x, y], i) => (
                       <circle key={i} cx={x} cy={y} r="4" fill="#70E000" />
                     ))}
                   </svg>
                   <div className="flex justify-between text-[#697485] text-[7px] sm:text-[8px] mt-2">
-                    {["28 Apr","29 Apr","30 Apr","1 May","2 May","3 May","4 May","5 May"].map(date => (
+                    {["28 Apr", "29 Apr", "30 Apr", "1 May", "2 May", "3 May", "4 May", "5 May"].map(date => (
                       <span key={date}>{date}</span>
                     ))}
                   </div>
@@ -316,10 +312,9 @@ export default function RootPage() {
               short, with no expiration on your positions.
             </p>
 
-            {/* CTA button with golden glow effect */}
             <button
               onClick={() => router.push("/dashboard")}
-              className="justify-center text-white text-base sm:text-lg md:text-xl lg:text-2xl font-medium font-['Inter'] leading-loose px-4 sm:px-6 lg:px-[28px] py-3 md:py-[12px] bg-gradient-to-br from-[#111214] to-[#22242a] rounded-[100px] shadow-[-12px_-12px_24px_0px_rgba(21,94,239,0.24)] shadow-[12px_12px_24px_0px_rgba(255,175,41,0.24)] outline outline-[2px] outline-[#155dee] inline-flex justify-center items-center gap-[13px] overflow-hidden w-full max-w-xs sm:max-w-sm md:max-w-none md:w-auto"
+              className="justify-center text-white text-base sm:text-sm md:text-md lg:text-lg font-sm font-['Inter'] leading-loose px-4 sm:px-6 lg:px-[28px] py-3 md:py-[12px] bg-gradient-to-br from-[#111214] to-[#22242a] rounded-[100px] shadow-[-12px_-12px_24px_0px_rgba(21,94,239,0.24)] shadow-[12px_12px_24px_0px_rgba(255,175,41,0.24)] outline outline-[2px] outline-[#155dee] inline-flex justify-center items-center gap-[13px] overflow-hidden w-full max-w-xs sm:max-w-sm md:max-w-none md:w-auto"
             >
               Sign Up Now!
             </button>
@@ -327,11 +322,9 @@ export default function RootPage() {
         </div>
       </section>
 
-      {/* Updated Footer */}
       <footer className="py-8 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-12 gap-6 md:gap-10">
-            {/* Brand section */}
             <div className="col-span-2 md:col-span-4">
               <h3 className="text-lg md:text-xl font-bold text-white mb-4">
                 BeTheNation.Fun
