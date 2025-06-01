@@ -17,6 +17,7 @@ const countryMetricSchema = new mongoose.Schema({
     fundingCooldown: { type: Number },
     fundingPercent: { type: Number },
     liquidationPrice: { type: Number },
+    flag: { type: String, required: true },
 });
 
 countryMetricSchema.index({ countryCode: 1, timestamp: -1 });

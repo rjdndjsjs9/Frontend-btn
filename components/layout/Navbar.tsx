@@ -1,22 +1,29 @@
 "use client";
 
 import type React from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ConnectWalletButton } from "@/components/buttons/connect-wallet-button";
 import { FaucetButton } from "@/components/buttons/FaucetButton";
 
 export default function Navbar() {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
   return (
     <nav className="bg-[#111213]">
       <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center">
+        <div className="flex items-center justify-between w-full md:w-auto">
           <Link
             href="/"
             className="text-xl font-medium text-white flex items-center"
           >
             <svg
-              width="58"
-              height="58"
+              width="40"
+              height="40"
               viewBox="0 0 58 58"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -44,8 +51,44 @@ export default function Navbar() {
             </svg>
             BeTheNation.fun
           </Link>
+          
+          {/* Three dots menu button - visible only on mobile */}
+          <div className="relative md:hidden">
+            <button
+              onClick={toggleDropdown}
+              className="text-white hover:text-gray-300 transition-colors p-2"
+              aria-label="Menu"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <circle cx="12" cy="5" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="19" r="1.5" />
+              </svg>
+            </button>
+            
+            {/* Dropdown menu */}
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 bg-[#1a1b1c] border border-gray-700 rounded-lg shadow-lg z-50 min-w-[150px]">
+                <div className="py-2 px-1 space-y-2">
+                  <div className="px-3 py-2">
+                    <ConnectWalletButton />
+                  </div>
+                  <div className="px-3 py-2">
+                    <FaucetButton />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex items-center space-x-6">
+        
+        {/* Desktop buttons - hidden on mobile */}
+        <div className="hidden md:flex items-center space-x-6">
           <ConnectWalletButton />
           <FaucetButton />
         </div>

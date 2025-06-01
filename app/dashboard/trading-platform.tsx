@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CountryCard from "@/components/dashboard/CountryCard";
 import HistoryTable from "@/components/dashboard/HistoryTable";
+import useSWR from "swr";
+import { fetcher } from "@/src/services/fetcher";
+import { RPC_URL } from "@/lib/contracts/constants";
 
 export type CountryData = {
   id: string;
@@ -15,189 +18,99 @@ export type CountryData = {
   sentiment: "Bullish" | "Bearish" | "Neutral";
   changePercent: number;
   trend: "up" | "down";
+  status: string;
 };
-
-const countryData: CountryData[] = [
-  {
-    id: "usa",
-    name: "USA",
-    flagCode: "🇺🇸",
-    countryScore: 1839,
-    volume24h: "$1,500,000",
-    indexPrice: "$1,300,000",
-    sentiment: "Bullish",
-    changePercent: 3.2,
-    trend: "up",
-  },
-  {
-    id: "germany",
-    name: "Germany",
-    flagCode: "🇩🇪",
-    countryScore: 1200,
-    volume24h: "$800,000",
-    indexPrice: "$1,100,000",
-    sentiment: "Bearish",
-    changePercent: -1.8,
-    trend: "down",
-  },
-  {
-    id: "japan",
-    name: "Japan",
-    flagCode: "🇯🇵",
-    countryScore: 1600,
-    volume24h: "$1,050,000",
-    indexPrice: "$950,000",
-    sentiment: "Bearish",
-    changePercent: 0.5,
-    trend: "up",
-  },
-  {
-    id: "india",
-    name: "India",
-    flagCode: "🇮🇳",
-    countryScore: 1050,
-    volume24h: "$1,200,000",
-    indexPrice: "$850,000",
-    sentiment: "Bullish",
-    changePercent: 2.1,
-    trend: "up",
-  },
-  {
-    id: "brazil",
-    name: "Brazil",
-    flagCode: "🇧🇷",
-    countryScore: 900,
-    volume24h: "$600,000",
-    indexPrice: "$720,000",
-    sentiment: "Bearish",
-    changePercent: -0.3,
-    trend: "down",
-  },
-  {
-    id: "uk",
-    name: "United Kingdom",
-    flagCode: "🇬🇧",
-    countryScore: 1500,
-    volume24h: "$2,000,000",
-    indexPrice: "$1,350,000",
-    sentiment: "Bullish",
-    changePercent: 4.5,
-    trend: "up",
-  },
-  {
-    id: "china",
-    name: "China",
-    flagCode: "🇨🇳",
-    countryScore: 1700,
-    volume24h: "$1,500,000",
-    indexPrice: "$1,100,000",
-    sentiment: "Bullish",
-    changePercent: 2.7,
-    trend: "up",
-  },
-  {
-    id: "canada",
-    name: "Canada",
-    flagCode: "🇨🇦",
-    countryScore: 1400,
-    volume24h: "$900,000",
-    indexPrice: "$1,250,000",
-    sentiment: "Neutral",
-    changePercent: 1.1,
-    trend: "up",
-  },
-  {
-    id: "australia",
-    name: "Australia",
-    flagCode: "🇦🇺",
-    countryScore: 1450,
-    volume24h: "$850,000",
-    indexPrice: "$1,150,000",
-    sentiment: "Bullish",
-    changePercent: 3.3,
-    trend: "up",
-  },
-  {
-    id: "mexico",
-    name: "Mexico",
-    flagCode: "🇲🇽",
-    countryScore: 950,
-    volume24h: "$500,000",
-    indexPrice: "$720,000",
-    sentiment: "Bearish",
-    changePercent: -2.1,
-    trend: "down",
-  },
-  {
-    id: "russia",
-    name: "Russia",
-    flagCode: "🇷🇺",
-    countryScore: 1200,
-    volume24h: "$600,000",
-    indexPrice: "$1,000,000",
-    sentiment: "Bearish",
-    changePercent: -1.5,
-    trend: "down",
-  },
-  {
-    id: "korea",
-    name: "South Korea",
-    flagCode: "🇰🇷",
-    countryScore: 1300,
-    volume24h: "$750,000",
-    indexPrice: "$1,080,000",
-    sentiment: "Neutral",
-    changePercent: 0.8,
-    trend: "up",
-  },
-];
 
 export default function TradingPlatform() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"discover" | "history">("discover");
+  const rpcUrl = RPC_URL;
+  const { data, error, isLoading } = useSWR(`${rpcUrl}/api/v1/metrics/cards`, fetcher);
 
-  // Filter countries based on search term
-  const filteredCountries = countryData.filter((country) =>
-    country.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const countryData: CountryData[] = useMemo(() => {
+    if (!data?.data) return [];
+
+    return data.data.map((item: any, index: number) => ({
+      id: item.code,
+      name: item.name,
+      flagCode: item.flag,
+      countryScore: item.countryScore || 0,
+      volume24h: item.volume24h || "N/A",
+      indexPrice: item.indexPrice || "N/A",
+      sentiment: item.changePercent > 0 ? "Bullish" : item.changePercent < 0 ? "Bearish" : "Neutral",
+      changePercent: item.changePercent || 0,
+      trend: item.changePercent >= 0 ? "up" : "down",
+      status: item.status === "COMING SOON" ? "COMING SOON" : "ACTIVE",
+    }));
+  }, [data]);
+  const filteredCountries = useMemo(() => {
+    return countryData.filter((country) =>
+      country.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [countryData, searchTerm]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#111214] text-white">
+        <div className="p-4 md:p-6 bg-[#111214]">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+              <p className="text-[#888]">Loading countries...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#111214] text-white">
+        <div className="p-4 md:p-6 bg-[#111214]">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <p className="text-red-400 mb-2">Error loading countries</p>
+              <p className="text-[#888] text-sm">{error.message}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#111214] text-white">
-      {/* Header with Tabs and Search */}
       <div className="p-4 md:p-6 bg-[#111214]">
         <div className="w-full flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center">
           {/* Tab Navigation */}
           <div className="px-2 py-2 rounded-[100px] outline outline-2 outline-offset-[-2px] outline-[#1d1f22] flex justify-start items-center gap-2.5 w-full md:w-auto">
             <motion.button
               onClick={() => setActiveTab("discover")}
-              className={`h-12 md:h-[63px] px-4 md:px-6 py-1.5 ${
-                activeTab === "discover" ? "bg-[#262a33]" : ""
-              } rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex justify-center items-center gap-4 flex-1 md:flex-none`}
+              className={`h-12 md:h-[63px] px-4 md:px-6 py-1.5 ${activeTab === "discover" ? "bg-[#262a33]" : ""
+                } rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex justify-center items-center gap-4 flex-1 md:flex-none`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
             >
               <div
-                className={`${
-                  activeTab === "discover" ? "text-white" : "text-[#505050]"
-                } text-base md:text-xl font-normal font-['Inter'] leading-tight`}
+                className={`${activeTab === "discover" ? "text-white" : "text-[#505050]"
+                  } text-base md:text-xl font-normal font-['Inter'] leading-tight`}
               >
                 Discover
               </div>
             </motion.button>
             <motion.button
               onClick={() => setActiveTab("history")}
-              className={`h-12 md:h-[63px] px-4 md:px-6 py-1.5 ${
-                activeTab === "history" ? "bg-[#262a33]" : ""
-              } rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex justify-center items-center gap-4 flex-1 md:flex-none`}
+              className={`h-12 md:h-[63px] px-4 md:px-6 py-1.5 ${activeTab === "history" ? "bg-[#262a33]" : ""
+                } rounded-[100px] shadow-[inset_1px_2px_2px_0px_rgba(0,0,0,0.08)] flex justify-center items-center gap-4 flex-1 md:flex-none`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
             >
               <div
-                className={`${
-                  activeTab === "history" ? "text-white" : "text-[#505050]"
-                } text-base md:text-xl font-normal font-['Inter'] leading-tight`}
+                className={`${activeTab === "history" ? "text-white" : "text-[#505050]"
+                  } text-base md:text-xl font-normal font-['Inter'] leading-tight`}
               >
                 History
               </div>
@@ -259,9 +172,64 @@ export default function TradingPlatform() {
               transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
             >
-              {filteredCountries.map((country) => (
-                <CountryCard key={country.id} country={country} />
-              ))}
+              {filteredCountries.length > 0 ? (
+                filteredCountries.map((country) => (
+                  <div key={country.id} className="relative">
+                    {/* Country Card */}
+                    <div
+                      className={`
+                        ${country.status === "COMING SOON"
+                          ? "pointer-events-none cursor-not-allowed"
+                          : "cursor-pointer"
+                        }
+                      `}
+                    >
+                      <CountryCard country={country} />
+                    </div>
+
+                    {/* Coming Soon Overlay */}
+                    {country.status === "COMING SOON" && (
+                      <motion.div
+                        className="absolute inset-0 bg-black/70 backdrop-blur-sm rounded-[30px] flex items-center justify-center z-10"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <div className="text-center px-4">
+                          <motion.div
+                            className="text-white text-xl md:text-2xl font-bold mb-2"
+                            initial={{ y: 10, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.1 }}
+                          >
+                            Coming Soon
+                          </motion.div>
+                          <motion.div
+                            className="text-gray-300 text-sm md:text-base"
+                            initial={{ y: 10, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            Stay tuned for updates
+                          </motion.div>
+                          <motion.div
+                            className="mt-3 w-8 h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mx-auto"
+                            initial={{ width: 0 }}
+                            animate={{ width: 32 }}
+                            transition={{ delay: 0.4, duration: 0.5 }}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-[#888] text-lg">
+                    {searchTerm ? "No countries found matching your search." : "No countries available."}
+                  </p>
+                </div>
+              )}
             </motion.div>
           ) : (
             <motion.div
@@ -277,6 +245,7 @@ export default function TradingPlatform() {
           )}
         </AnimatePresence>
       </div>
+
     </div>
   );
 }

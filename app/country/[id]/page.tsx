@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import useSWR from "swr";
 
 import {
   useReadContract,
@@ -18,254 +19,12 @@ import {
   USDC_ADDRESSES,
   USDC_ABI,
   MockUSDC_ABI,
+  RPC_URL,
 } from "@/lib/contracts/constants";
 import { usePositionsStore } from "@/components/trading/PositionsContext";
 import { useTradeHistoryStore } from "@/components/dashboard/tradeHistoryStore";
-import HistoryTable from "@/components/dashboard/HistoryTable"; // Make sure this import exists
-
-// Sample country data - in a real app, this would come from an API
-const countryData = {
-  usa: {
-    name: "USA",
-    flagCode: "us",
-    countryScore: 1839,
-    volume24h: "1,500,000", //PTT 1,500,000
-    indexPrice: "$1,300,000", //PTT 1,300,000
-    sentiment: "Bullish",
-    changePercent: 3.2,
-    trend: "up",
-    markPrice: "3.87M",
-    fundingRate: "0.01%",
-    openInterest: "$7,500,000", //PTT 7,500,000
-    openTrades: "$120,800", //PTT 120,000
-    volumes: "$200,000", //PTT 200,000
-    fundingCooldown: "00:37:40",
-    fundingPercent: "0.3000%",
-    description:
-      "The USA is one of the largest and most influential economies globally, driven by a diverse range of sectors including technology, finance, and consumer goods. With a CountryScore of 1,839, the U.S. reflects a strong economic performance, supported by GDP growth, low unemployment, and a stable inflation rate. The market is dominated by robust stock exchanges such as the S&P 500 and NASDAQ, which are major indicators of global investor sentiment.",
-    liquidationPrice: "5.41M",
-  },
-  brazil: {
-    name: "Brazil",
-    flagCode: "br",
-    countryScore: 900,
-    volume24h: "$600,000",
-    indexPrice: "$720,000",
-    sentiment: "Bearish",
-    changePercent: -0.3,
-    trend: "down",
-    markPrice: "2.15M",
-    fundingRate: "0.015%",
-    openInterest: "$3,200,000",
-    openTrades: "$85,000",
-    volumes: "$150,000",
-    fundingCooldown: "00:45:20",
-    fundingPercent: "0.4500%",
-    description:
-      "Brazil is the largest economy in South America, known for its rich natural resources and diverse industrial base. With a CountryScore of 900, Brazil's economy shows moderate growth potential, supported by its agricultural exports, mining sector, and growing technology industry. The country faces challenges with inflation and fiscal policy, but maintains strong potential in renewable energy and sustainable development.",
-    liquidationPrice: "3.22M",
-  },
-  germany: {
-    name: "Germany",
-    flagCode: "de",
-    countryScore: 1200,
-    volume24h: "$800,000",
-    indexPrice: "$1,100,000",
-    sentiment: "Bearish",
-    changePercent: -1.8,
-    trend: "down",
-    markPrice: "2.85M",
-    fundingRate: "0.012%",
-    openInterest: "$4,500,000",
-    openTrades: "$95,000",
-    volumes: "$180,000",
-    fundingCooldown: "00:42:15",
-    fundingPercent: "0.3800%",
-    description:
-      "Germany is Europe's largest economy and a global leader in manufacturing and engineering. With a CountryScore of 1,200, Germany's economy is characterized by its strong industrial base, particularly in automotive and machinery sectors. The country faces challenges with energy transition and demographic changes, but maintains a robust export-oriented economy and high standards of living.",
-    liquidationPrice: "4.27M",
-  },
-  japan: {
-    name: "Japan",
-    flagCode: "jp",
-    countryScore: 1600,
-    volume24h: "$1,050,000",
-    indexPrice: "$950,000",
-    sentiment: "Bearish",
-    changePercent: 0.5,
-    trend: "up",
-    markPrice: "3.25M",
-    fundingRate: "0.008%",
-    openInterest: "$5,800,000",
-    openTrades: "$110,000",
-    volumes: "$220,000",
-    fundingCooldown: "00:35:10",
-    fundingPercent: "0.2500%",
-    description:
-      "Japan is the world's third-largest economy, known for its advanced technology and manufacturing sectors. With a CountryScore of 1,600, Japan's economy shows resilience despite challenges with aging population and deflation. The country leads in robotics, electronics, and automotive industries, while maintaining a strong focus on innovation and quality manufacturing.",
-    liquidationPrice: "4.87M",
-  },
-  india: {
-    name: "India",
-    flagCode: "in",
-    countryScore: 1050,
-    volume24h: "$1,200,000",
-    indexPrice: "$850,000",
-    sentiment: "Bullish",
-    changePercent: 2.1,
-    trend: "up",
-    markPrice: "2.55M",
-    fundingRate: "0.018%",
-    openInterest: "$4,200,000",
-    openTrades: "$90,000",
-    volumes: "$190,000",
-    fundingCooldown: "00:48:30",
-    fundingPercent: "0.5200%",
-    description:
-      "India is one of the world's fastest-growing major economies, driven by its large domestic market and growing technology sector. With a CountryScore of 1,050, India's economy shows strong potential in IT services, manufacturing, and consumer goods. The country faces challenges with infrastructure and income inequality, but maintains robust growth prospects and a young, dynamic workforce.",
-    liquidationPrice: "3.82M",
-  },
-  uk: {
-    name: "United Kingdom",
-    flagCode: "gb",
-    countryScore: 1500,
-    volume24h: "$2,000,000",
-    indexPrice: "$1,350,000",
-    sentiment: "Bullish",
-    changePercent: 4.5,
-    trend: "up",
-    markPrice: "3.45M",
-    fundingRate: "0.009%",
-    openInterest: "$6,500,000",
-    openTrades: "$130,000",
-    volumes: "$250,000",
-    fundingCooldown: "00:33:20",
-    fundingPercent: "0.2800%",
-    description:
-      "The United Kingdom is one of the world's leading financial centers and a major global economy. With a CountryScore of 1,500, the UK's economy is driven by its strong financial services sector, creative industries, and advanced manufacturing. Despite challenges with Brexit and global economic shifts, the country maintains a competitive edge in technology, finance, and professional services.",
-    liquidationPrice: "5.17M",
-  },
-  china: {
-    name: "China",
-    flagCode: "cn",
-    countryScore: 1700,
-    volume24h: "$1,500,000",
-    indexPrice: "$1,100,000",
-    sentiment: "Bullish",
-    changePercent: 2.7,
-    trend: "up",
-    markPrice: "3.65M",
-    fundingRate: "0.011%",
-    openInterest: "$7,200,000",
-    openTrades: "$140,000",
-    volumes: "$280,000",
-    fundingCooldown: "00:36:15",
-    fundingPercent: "0.3200%",
-    description:
-      "China is the world's second-largest economy and a global manufacturing powerhouse. With a CountryScore of 1,700, China's economy shows strong growth potential, driven by its massive domestic market and technological innovation. The country leads in manufacturing, technology, and infrastructure development, while transitioning towards a more consumption-driven economic model.",
-    liquidationPrice: "5.47M",
-  },
-  canada: {
-    name: "Canada",
-    flagCode: "ca",
-    countryScore: 1400,
-    volume24h: "$900,000",
-    indexPrice: "$1,250,000",
-    sentiment: "Neutral",
-    changePercent: 1.1,
-    trend: "up",
-    markPrice: "3.15M",
-    fundingRate: "0.010%",
-    openInterest: "$5,500,000",
-    openTrades: "$100,000",
-    volumes: "$210,000",
-    fundingCooldown: "00:39:45",
-    fundingPercent: "0.2900%",
-    description:
-      "Canada is one of the world's wealthiest nations with a highly developed economy. With a CountryScore of 1,400, Canada's economy is characterized by its abundant natural resources, strong financial sector, and advanced technology industries. The country maintains a stable economic environment with a focus on sustainable development and innovation.",
-    liquidationPrice: "4.72M",
-  },
-  australia: {
-    name: "Australia",
-    flagCode: "au",
-    countryScore: 1450,
-    volume24h: "$850,000",
-    indexPrice: "$1,150,000",
-    sentiment: "Bullish",
-    changePercent: 3.3,
-    trend: "up",
-    markPrice: "3.25M",
-    fundingRate: "0.009%",
-    openInterest: "$5,200,000",
-    openTrades: "$95,000",
-    volumes: "$200,000",
-    fundingCooldown: "00:38:30",
-    fundingPercent: "0.2700%",
-    description:
-      "Australia is a highly developed economy with a strong focus on natural resources and services. With a CountryScore of 1,450, Australia's economy is characterized by its mining sector, agricultural exports, and growing technology industry. The country maintains a stable economic environment with a high standard of living and strong ties to Asian markets.",
-    liquidationPrice: "4.87M",
-  },
-  mexico: {
-    name: "Mexico",
-    flagCode: "mx",
-    countryScore: 950,
-    volume24h: "$500,000",
-    indexPrice: "$720,000",
-    sentiment: "Bearish",
-    changePercent: -2.1,
-    trend: "down",
-    markPrice: "2.25M",
-    fundingRate: "0.016%",
-    openInterest: "$3,500,000",
-    openTrades: "$80,000",
-    volumes: "$160,000",
-    fundingCooldown: "00:46:15",
-    fundingPercent: "0.4800%",
-    description:
-      "Mexico is a major emerging market economy with strong manufacturing and export sectors. With a CountryScore of 950, Mexico's economy shows potential in automotive manufacturing, electronics, and energy. The country faces challenges with economic inequality and security, but maintains strong trade relationships and a growing middle class.",
-    liquidationPrice: "3.37M",
-  },
-  russia: {
-    name: "Russia",
-    flagCode: "ru",
-    countryScore: 1200,
-    volume24h: "$600,000",
-    indexPrice: "$1,000,000",
-    sentiment: "Bearish",
-    changePercent: -1.5,
-    trend: "down",
-    markPrice: "2.85M",
-    fundingRate: "0.014%",
-    openInterest: "$4,000,000",
-    openTrades: "$90,000",
-    volumes: "$170,000",
-    fundingCooldown: "00:43:20",
-    fundingPercent: "0.4200%",
-    description:
-      "Russia is a major global economy with significant natural resources and industrial capacity. With a CountryScore of 1,200, Russia's economy is characterized by its energy sector, military-industrial complex, and raw materials exports. The country faces challenges with economic sanctions and diversification, but maintains strong potential in technology and manufacturing.",
-    liquidationPrice: "4.27M",
-  },
-  korea: {
-    name: "South Korea",
-    flagCode: "kr",
-    countryScore: 1300,
-    volume24h: "$750,000",
-    indexPrice: "$1,080,000",
-    sentiment: "Neutral",
-    changePercent: 0.8,
-    trend: "up",
-    markPrice: "3.05M",
-    fundingRate: "0.010%",
-    openInterest: "$4,800,000",
-    openTrades: "$100,000",
-    volumes: "$190,000",
-    fundingCooldown: "00:40:15",
-    fundingPercent: "0.3000%",
-    description:
-      "South Korea is a highly developed economy known for its technology and manufacturing sectors. With a CountryScore of 1,300, South Korea's economy is driven by its electronics, automotive, and shipbuilding industries. The country maintains a strong focus on innovation and exports, with leading global companies in various sectors.",
-    liquidationPrice: "4.57M",
-  },
-};
+import HistoryTable from "@/components/dashboard/HistoryTable";
+import { fetcher } from "@/src/services/fetcher";
 
 // Add these type definitions before the ClosePositionModal component
 interface ClosePositionModalProps {
@@ -317,7 +76,7 @@ function ClosePositionModal({
     },
   } as const;
 
-  if (!isOpen || step === null) return null; // <-- Add this guard
+  if (!isOpen || step === null) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -327,21 +86,19 @@ function ClosePositionModal({
           {[1, 2, 3, 4].map((number) => (
             <div key={number} className="flex items-center">
               <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                  step === number
-                    ? "bg-[#155dee] text-white"
-                    : step > number
+                className={`w-6 h-6 rounded-full flex items-center justify-center ${step === number
+                  ? "bg-[#155dee] text-white"
+                  : step > number
                     ? "bg-[#155dee] text-white"
                     : "bg-[#2d2d2e] text-gray-400"
-                }`}
+                  }`}
               >
                 {number}
               </div>
               {number < 4 && (
                 <div
-                  className={`h-0.5 flex-1 ${
-                    step > number ? "bg-[#155dee]" : "bg-[#2d2d2e]"
-                  }`}
+                  className={`h-0.5 flex-1 ${step > number ? "bg-[#155dee]" : "bg-[#2d2d2e]"
+                    }`}
                 />
               )}
             </div>
@@ -475,7 +232,37 @@ function ClosePositionModal({
 
 export default function CountryPage() {
   const { id } = useParams();
-  const country = countryData[id as keyof typeof countryData];
+  const countryId = typeof id === "string" ? id.toUpperCase() : "";
+  console.log(`${RPC_URL}/api/v1/country/${countryId}/trade`)
+  const { data, error, isLoading } = useSWR(
+    countryId ? `${RPC_URL}/api/v1/country/${countryId}/trade` : null,
+    fetcher
+  );
+
+  const country = React.useMemo(() => {
+    if (!data?.data) return null;
+    const d = data.data;
+    return {
+      name: d.name,
+      flagCode: d.code?.toLowerCase() || "",
+      countryScore: d.tradingMetrics?.countryScore ?? 0,
+      volume24h: d.tradingMetrics?.volume24h ?? "-",
+      indexPrice: d.marketInfo?.indexPrice ?? "-",
+      sentiment: d.marketInfo?.sentiment ?? "-",
+      trend: d.marketInfo?.trend ?? "-",
+      markPrice: d.marketInfo?.markPrice ?? "-",
+      fundingRate: d.marketInfo?.fundingRate ?? "-",
+      openInterest: d.marketInfo?.openInterest ?? "-",
+      openTrades: d.tradingMetrics?.openTrades ?? "-",
+      volumes: d.tradingMetrics?.volume24h ?? "-",
+      fundingCooldown: d.tradingMetrics?.fundingCooldown ?? "-",
+      fundingPercent: d.marketInfo?.fundingRate ?? "-",
+      description: d.about ?? "-",
+      liquidationPrice: d.marketInfo?.liquidationPrice ?? "-",
+    };
+  }, [data]);
+
+  // const country = countryData[id as keyof typeof countryData];
   const { addTrade, updateTrade } = useTradeHistoryStore();
   const [tradeId, setTradeId] = useState<string>("");
 
@@ -505,10 +292,9 @@ export default function CountryPage() {
     abi: MockUSDC_ABI,
     functionName: "getPosition",
     args: [] as const,
-    account: address, // Use account instead of enabled
+    account: address,
   });
 
-  // Create a wrapper function that conditionally calls the hook's refetch
   const refetchPosition = () => {
     if (address) {
       return refetchPositionFromHook();
@@ -546,7 +332,7 @@ export default function CountryPage() {
       if (address) {
         refetchBalance();
       }
-    }, 10000); // Refresh every 10 seconds
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [address, refetchBalance]);
@@ -563,11 +349,6 @@ export default function CountryPage() {
 
       const decimals = 6;
 
-      // const sizeInWei = parseEther(
-      //   (Number(position.size) * Number(position.leverage)).toString(),
-      //   decimals
-      // );
-
       const sizeInWei = parseUnits(
         (Number(position.size) * Number(position.leverage)).toString(),
         decimals
@@ -581,20 +362,20 @@ export default function CountryPage() {
       setTradeId(newTradeId);
 
       // Add trade to history immediately when placing
-      addTrade({
-        id: newTradeId,
-        country: country.name,
-        countryCode: id as string,
-        time: new Date().toLocaleTimeString(),
-        entryPrice: country.markPrice,
-        marketPrice: country.markPrice,
-        pnl: {
-          amount: "$0.00",
-          percentage: "0.0",
-          isProfit: true,
-        },
-        status: "Open",
-      });
+      // addTrade({
+      //   id: newTradeId,
+      //   country: country.name,
+      //   countryCode: id as string,
+      //   time: new Date().toLocaleTimeString(),
+      //   entryPrice: country.markPrice,
+      //   marketPrice: country.markPrice,
+      //   pnl: {
+      //     amount: "$0.00",
+      //     percentage: "0.0",
+      //     isProfit: true,
+      //   },
+      //   status: "Open",
+      // });
 
       // 1. Approve contract to use token
       const approvalTx = await writeContract({
@@ -655,7 +436,7 @@ export default function CountryPage() {
       if (tradeId) {
         updateTrade(tradeId, {
           status: "Closed",
-          marketPrice: country.markPrice,
+          marketPrice: country?.markPrice ?? "-",
           time: new Date().toLocaleTimeString(),
           pnl: {
             amount: "$0.00",
@@ -677,8 +458,20 @@ export default function CountryPage() {
     setMounted(true);
   }, []);
 
-  if (!country) {
-    return <div>Country not found</div>;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-white">
+        Loading country data...
+      </div>
+    );
+  }
+
+  if (error || !country) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-white">
+        Country not found or failed to load.
+      </div>
+    );
   }
 
   return (
@@ -889,7 +682,7 @@ export default function CountryPage() {
                       <div key={i} className="h-0 border-t border-[#323232] opacity-70" />
                     ))}
                   </div>
-                  
+
                   {/* Line Chart SVG */}
                   <svg className="absolute inset-0 w-full h-full z-10" preserveAspectRatio="none" viewBox="0 0 800 400">
                     <defs>
@@ -898,13 +691,13 @@ export default function CountryPage() {
                         <stop offset="100%" stopColor="#70E000" stopOpacity="0" />
                       </linearGradient>
                     </defs>
-                    
+
                     {/* Area under the line */}
                     <path
                       d="M40,280 L100,200 L160,240 L220,180 L280,220 L340,160 L400,190 L460,150 L520,180 L580,140 L640,170 L700,130 L760,150 L760,350 L40,350 Z"
                       fill="url(#greenGradient)"
                     />
-                    
+
                     {/* Main line */}
                     <path
                       d="M40,280 L100,200 L160,240 L220,180 L280,220 L340,160 L400,190 L460,150 L520,180 L580,140 L640,170 L700,130 L760,150"
@@ -912,49 +705,48 @@ export default function CountryPage() {
                       strokeWidth="2"
                       fill="none"
                     />
-                    
+
                     {/* Data points - Responsive sizing */}
                     {[
                       [40, 280], [100, 200], [160, 240], [220, 180], [280, 220], [340, 160],
                       [400, 190], [460, 150], [520, 180], [580, 140], [640, 170], [700, 130], [760, 150],
                     ].map(([x, y], i) => (
-                      <circle 
-                        key={i} 
-                        cx={x} 
-                        cy={y} 
-                        r="2" 
-                        fill="#70E000" 
+                      <circle
+                        key={i}
+                        cx={x}
+                        cy={y}
+                        r="2"
+                        fill="#70E000"
                         className="sm:r-3 lg:r-4"
                       />
                     ))}
                   </svg>
-                  
+
                   {/* X-axis labels - Responsive padding */}
                   <div className="absolute bottom-0 left-0 w-full px-2 sm:px-4 lg:px-6 flex justify-between items-center z-20">
                     {/* X-axis labels would go here if needed */}
                   </div>
                 </div>
-                
+
                 {/* Y-axis section - Fully responsive */}
                 <div className="w-6 sm:w-8 lg:w-[47px] self-stretch flex flex-col justify-between items-end pl-1 sm:pl-2 lg:pl-3 relative">
                   {/* Vertical line - Hidden on mobile */}
                   <div className="hidden lg:block absolute right-0 top-0 h-full w-px bg-[#323232]" />
-                  
+
                   {/* Y-axis labels - Mobile optimized */}
                   <div className="flex flex-col justify-between h-full py-1 sm:py-2 gap-1 sm:gap-0">
                     {[
-                      "2500", "2300", "2000", "1800", "1600", 
+                      "2500", "2300", "2000", "1800", "1600",
                       "1400", "1200", "1100", "900"
                     ].map((value, index) => (
                       <div
                         key={value}
                         className="text-[#697485] text-[10px] sm:text-xs font-normal font-['Inter'] leading-tight text-right whitespace-nowrap"
-                        style={{ 
-                          transform: `translateY(${
-                            index === 0 ? '0' : 
-                            index === 8 ? '-100%' : 
-                            '-50%'
-                          })` 
+                        style={{
+                          transform: `translateY(${index === 0 ? '0' :
+                            index === 8 ? '-100%' :
+                              '-50%'
+                            })`
                         }}
                       >
                         {/* Show abbreviated values on mobile */}
@@ -972,30 +764,26 @@ export default function CountryPage() {
             {/* Trading Panel */}
             <div className="self-stretch p-4 sm:p-6 bg-[#1d1f22] rounded-xl shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)] outline outline-1 outline-offset-[-1px] outline-[#323232] inline-flex flex-col justify-start items-start gap-4 sm:gap-6 transition-all duration-200 hover:shadow-lg">
               <div className="self-stretch px-2.5 py-2 bg-[#2d2d2e] rounded-[100px] flex">
-                <div className="self-stretch h-[61px] flex-1 flex items-center relative">
+                <div className="self-stretch h-[40px] sm:h-[45px] flex-1 flex items-center relative"> {/* Made even smaller for mobile */}
                   <div
-                    className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${
-                      position.isLong ? "justify-start" : "justify-end"
-                    }`}
+                    className={`absolute inset-0 transition-all duration-300 ease-in-out flex ${position.isLong ? "justify-start" : "justify-end"
+                      }`}
                   >
                     <div
-                      className={`h-full w-1/2 ${
-                        position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
-                      } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
+                      className={`h-full w-1/2 ${position.isLong ? "bg-[#16b264]" : "bg-[#FF4B4B]"
+                        } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)] shadow-[0px_1px_3px_0px_rgba(16,24,40,0.10)]`}
                     />
                   </div>
                   <div
-                    className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
-                      position.isLong ? "text-white" : "text-[#545454]"
-                    }`}
+                    className={`flex-1 z-10 px-[8px] sm:px-[12px] py-[6px] sm:py-[10px] flex justify-center items-center gap-[8px] sm:gap-[12px] cursor-pointer transition-colors duration-300`} /* Even smaller padding for mobile */
                     onClick={() => setPosition({ ...position, isLong: true })}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-1.5"> {/* Smaller gap for mobile */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="w-6 h-6"
+                        className="w-4 h-4 sm:w-5 sm:h-5" /* Even smaller icon for mobile */
                       >
                         <path
                           fillRule="evenodd"
@@ -1003,23 +791,20 @@ export default function CountryPage() {
                           clipRule="evenodd"
                         />
                       </svg>
-                      <span className="text-xl font-medium font-['Inter'] leading-snug">
-                        Long
-                      </span>
+                      <span className="text-base sm:text-lg font-medium font-['Inter'] leading-snug">Long</span> {/* Smaller text for mobile */}
                     </div>
                   </div>
                   <div
-                    className={`flex-1 z-10 px-[18.86px] py-[15px] flex justify-center items-center gap-[18.86px] cursor-pointer transition-colors duration-300 ${
-                      position.isLong ? "text-white" : "text-[#545454]"
-                    }`}
+                    className={`flex-1 z-10 px-[8px] sm:px-[12px] py-[6px] sm:py-[10px] flex justify-center items-center gap-[8px] sm:gap-[12px] cursor-pointer transition-colors duration-300 ${position.isLong ? "text-white" : "text-[#545454]"
+                      }`}
                     onClick={() => setPosition({ ...position, isLong: false })}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2"> {/* Smaller gap for mobile */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="w-6 h-6"
+                        className="w-4 h-4 sm:w-6 sm:h-6" /* Smaller icon for mobile */
                       >
                         <path
                           fillRule="evenodd"
@@ -1027,7 +812,7 @@ export default function CountryPage() {
                           clipRule="evenodd"
                         />
                       </svg>
-                      <span className="text-xl font-medium font-['Inter'] leading-snug">
+                      <span className="text-base sm:text-xl font-medium font-['Inter'] leading-snug">
                         Short
                       </span>
                     </div>
@@ -1052,12 +837,12 @@ export default function CountryPage() {
                             {!mounted
                               ? "Loading..."
                               : address
-                              ? walletBalance
-                                ? `${Number(walletBalance.formatted).toFixed(
+                                ? walletBalance
+                                  ? `${Number(walletBalance.formatted).toFixed(
                                     4
                                   )} ${walletBalance.symbol}`
-                                : "Loading..."
-                              : "Connect Wallet"}
+                                  : "Loading..."
+                                : "Connect Wallet"}
                           </span>
                         </div>
                       </div>
@@ -1076,9 +861,8 @@ export default function CountryPage() {
                         setPosition({ ...position, size: e.target.value })
                       }
                       placeholder="0.00"
-                      className={`flex-1 bg-transparent text-left outline-none border-none ${
-                        position.size ? "text-white" : "text-red-500"
-                      } text-lg sm:text-xl font-bold font-['Inter'] leading-tight min-w-0`}
+                      className={`flex-1 bg-transparent text-left outline-none border-none ${position.size ? "text-white" : "text-red-500"
+                        } text-lg sm:text-xl font-bold font-['Inter'] leading-tight min-w-0`}
                     />
                     <div className="text-[#d6d6d6] text-lg sm:text-xl font-bold font-['Inter'] leading-tight whitespace-nowrap">
                       USDC
@@ -1110,11 +894,10 @@ export default function CountryPage() {
                           style={{ left: `${((value - 1) / 4) * 100}%` }}
                         >
                           <div
-                            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-200 ${
-                              value <= Number(position.leverage)
-                                ? "bg-white shadow-[0_0_8px_rgba(21,93,238,0.5)]"
-                                : "bg-[#404040]"
-                            }`}
+                            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-200 ${value <= Number(position.leverage)
+                              ? "bg-white shadow-[0_0_8px_rgba(21,93,238,0.5)]"
+                              : "bg-[#404040]"
+                              }`}
                           />
                         </div>
                       ))}
@@ -1165,7 +948,7 @@ export default function CountryPage() {
                           </div>
                         </div>
                         <div className="flex-1 sm:w-[181px] inline-flex flex-col justify-start items-start">
-                          <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-normal font-['Inter'] leading-tight">
+                          <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-medium font-['Inter'] leading-tight">
                             Size - Entry Price
                           </div>
                           <div className="self-stretch justify-start text-white text-xs sm:text-sm font-medium font-['Inter'] leading-tight break-all">
@@ -1190,7 +973,7 @@ export default function CountryPage() {
                             </svg>
                           </div>
                           <div className="flex-1 inline-flex flex-col justify-start items-start">
-                            <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-normal font-['Inter'] leading-tight">
+                            <div className="self-stretch justify-start text-[#697485] text-xs sm:text-sm font-medium font-['Inter'] leading-tight">
                               Liquidated at
                             </div>
                             <div className="self-stretch justify-start text-white text-xs sm:text-sm font-medium font-['Inter'] leading-tight">
@@ -1202,11 +985,10 @@ export default function CountryPage() {
                     </div>
                   </div>
                   <button
-                    className={`self-stretch h-[60px] px-4 py-2 ${
-                      position.size && !isProcessing
-                        ? "bg-[#155dee]"
-                        : "bg-gray-600"
-                    } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
+                    className={`self-stretch h-[60px] px-4 py-2 ${position.size && !isProcessing
+                      ? "bg-[#155dee]"
+                      : "bg-gray-600"
+                      } rounded-[100px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.12)] inline-flex justify-center items-center gap-1`}
                     disabled={!position.size || isProcessing}
                     onClick={handlePlaceTrade}
                   >
@@ -1392,12 +1174,12 @@ export default function CountryPage() {
                   </button>
                 )}
               </div>
-              
+
               <div className="w-full flex-1">
                 {showPosition && closeStep === null ? (
                   <div className="w-full flex flex-col justify-start items-start space-y-3">
                     <div className="w-full h-px bg-[#323232]" />
-                    
+
                     {/* Position Header */}
                     <div className="w-full py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                       <div className="flex items-center gap-3">
@@ -1405,11 +1187,10 @@ export default function CountryPage() {
                         <span className="text-[#697485] text-sm font-medium">
                           {country.name}
                         </span>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          position.isLong 
-                            ? 'bg-[#16b264] bg-opacity-20 text-[#16b264]' 
-                            : 'bg-[#ff4545] bg-opacity-20 text-[#ff4545]'
-                        }`}>
+                        <span className={`text-xs px-2 py-1 rounded-full ${position.isLong
+                          ? 'bg-[#16b264] bg-opacity-20 text-[#16b264]'
+                          : 'bg-[#ff4545] bg-opacity-20 text-[#ff4545]'
+                          }`}>
                           {position.isLong ? 'LONG' : 'SHORT'}
                         </span>
                       </div>
@@ -1419,7 +1200,7 @@ export default function CountryPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Position Details */}
                     <div className="w-full space-y-3">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b border-[#323232] border-opacity-50">
@@ -1430,7 +1211,7 @@ export default function CountryPage() {
                           ${position.size}
                         </span>
                       </div>
-                      
+
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b border-[#323232] border-opacity-50">
                         <span className="text-[#697485] text-sm font-medium mb-1 sm:mb-0">
                           Entry Price
@@ -1439,7 +1220,7 @@ export default function CountryPage() {
                           {country.markPrice}
                         </span>
                       </div>
-                      
+
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b border-[#323232] border-opacity-50">
                         <span className="text-[#697485] text-sm font-medium mb-1 sm:mb-0">
                           Liquidation Price
@@ -1448,7 +1229,7 @@ export default function CountryPage() {
                           {country.liquidationPrice}
                         </span>
                       </div>
-                      
+
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b border-[#323232] border-opacity-50">
                         <span className="text-[#697485] text-sm font-medium mb-1 sm:mb-0">
                           Fees
@@ -1458,9 +1239,9 @@ export default function CountryPage() {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="w-full h-px bg-[#323232] my-4" />
-                    
+
                     {/* Additional Position */}
                     <div className="w-full py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                       <div className="flex items-center gap-3">
@@ -1481,21 +1262,19 @@ export default function CountryPage() {
                       {[1, 2, 3, 4].map((number) => (
                         <div key={number} className="flex items-center flex-1">
                           <div
-                            className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
-                              closeStep === number
-                                ? "bg-[#155dee] text-white"
-                                : closeStep > number
+                            className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${closeStep === number
+                              ? "bg-[#155dee] text-white"
+                              : closeStep > number
                                 ? "bg-[#155dee] text-white"
                                 : "bg-[#2d2d2e] text-gray-400"
-                            }`}
+                              }`}
                           >
                             {number}
-                                                   </div>
+                          </div>
                           {number < 4 && (
                             <div
-                              className={`h-0.5 flex-1 mx-1 sm:mx-2 ${
-                                closeStep > number ? "bg-[#155dee]" : "bg-[#2d2d2e]"
-                              }`}
+                              className={`h-0.5 flex-1 mx-1 sm:mx-2 ${closeStep > number ? "bg-[#155dee]" : "bg-[#2d2d2e]"
+                                }`}
                             />
                           )}
                         </div>
@@ -1684,7 +1463,7 @@ export default function CountryPage() {
                           </svg>
                         </button>
                       </div>
-                      
+
                       {/* History Table */}
                       <HistoryTable />
                     </div>
@@ -1701,7 +1480,7 @@ export default function CountryPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={1.5}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2v-14a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                       />
                     </svg>
                     <p className="text-gray-500 text-sm sm:text-base">No open positions</p>
