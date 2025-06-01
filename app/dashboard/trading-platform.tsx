@@ -31,9 +31,7 @@ export default function TradingPlatform() {
     if (!data?.data) return [];
 
     return data.data.map((item: any, index: number) => ({
-      id: item.metricId && item.metricId !== "undefined0"
-        ? item.metricId
-        : `${item.code}-${index}`,
+      id: item.code,
       name: item.name,
       flagCode: item.flag,
       countryScore: item.countryScore || 0,
