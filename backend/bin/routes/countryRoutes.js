@@ -10,7 +10,7 @@ router.get("/v1/country", countryController.getAllCountries);
 // GET /api/metrics/latest - Get latest metrics
 router.get("/v1/metrics/latest", countryMetricController.getLatestMetrics);
 router.get("/v1/metrics/cards", countryMetricController.getAllCardMetrics);
-router.get("/v1metrics/trades", countryMetricController.getAllTradeMetrics);
+router.get("/v1/metrics/trades", countryMetricController.getAllTradeMetrics);
 
 // Country-specific metrics routes
 router.get("/v1/country/:countryCode/metrics", countryMetricController.getCountryMetrics);
