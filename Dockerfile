@@ -1,21 +1,14 @@
-FROM node:18 
+FROM node:20
 
+# Set working directory
+WORKDIR /app
 
-WORKDIR /app/backend COPY backend/package*.json ./ 
+# Copy backend files dari app/backend ke dalam container
+COPY app/backend/ ./
 
+# Install dependencies
+RUN npm install
 
-RUN npm install 
+# Jalankan aplikasi
+CMD ["npm", "start"]
 
-
-COPY backend . 
-
-
-ENV PORT=1000 
-
-
-EXPOSE 1000 
-
-
-
-
-CMD ["node", "index.js"]
